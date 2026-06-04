@@ -1,0 +1,216 @@
+import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
+import axiosInstance from "../../helpers/axiosInstance";
+import toast from "react-hot-toast";
+
+const initialState = {
+    isLoggedIn: false,
+    role: "",
+    data: {},
+    usersData: [],
+};
+
+export const registerUser = createAsyncThunk(
+    "/auth/register",
+    async (userData) => {
+        try {
+            const response = axiosInstance.post("/users/register", userData);
+
+            toast.promise(response, {
+                loading: "Creating account...",
+                success: (resolvedPromise) =>
+                    resolvedPromise?.data?.message ||
+                    "Account created successfully",
+                error: "Failed to create account",
+            });
+
+            const apiResponse = await response;
+            return apiResponse;
+        } catch (error) {
+            console.log(error);
+            toast.error("Something went wrong");
+        }
+    }
+);
+
+export const loginUser = createAsyncThunk(
+    "/auth/login",
+    async (loginData) => {
+        try {
+            const response = axiosInstance.post("/users/login", loginData);
+
+            toast.promise(response, {
+                loading: "Logging in...",
+                success: (resolvedPromise) =>
+                    resolvedPromise?.data?.message ||
+                    "Login successful",
+                error: "Login failed",
+            });
+
+            const apiResponse = await response;
+            return apiResponse;
+        } catch (error) {
+            console.log(error);
+            toast.error("Something went wrong");
+        }
+    }
+);
+
+export const getMe = createAsyncThunk(
+    "/auth/me",
+    async () => {
+        try {
+            const response = axiosInstance.get("/users/me");
+
+            const apiResponse = await response;
+            return apiResponse;
+        } catch (error) {
+            console.log(error);
+            toast.error("Failed to fetch profile");
+        }
+    }
+);
+
+export const getAllUsers = createAsyncThunk(
+    "/auth/getAllUsers",
+    async () => {
+        try {
+            const apiResponse = await axiosInstance.get("/users");
+            return apiResponse;
+        } catch (error) {
+            console.log(error);
+        }
+    }
+);
+
+export const updateUser = createAsyncThunk(
+    "/auth/updateUser",
+    async ({ id, data }) => {
+        try {
+            const response = axiosInstance.put(`/users/${id}`, data);
+
+            toast.promise(response, {
+                loading: "Updating user...",
+                success: "User updated successfully",
+                error: (err) => {
+                    return err?.response?.data?.message || "Failed to update user";
+                },
+            });
+
+            const apiResponse = await response;
+            return apiResponse;
+        } catch (error) {
+            console.log(error);
+            toast.error("Something went wrong");
+        }
+    }
+);
+
+export const deleteUser = createAsyncThunk(
+    "/auth/deleteUser",
+    async (userId) => {
+        try {
+            const response = axiosInstance.delete(`/users/${userId}`);
+
+            toast.promise(response, {
+                loading: "Deleting user...",
+                success: "User deleted successfully",
+                error: (err) => {
+                    return err?.response?.data?.message || "Failed to delete user";
+                },
+            });
+
+            const apiResponse = await response;
+            return {
+                userId,
+                response: apiResponse,
+            };
+        } catch (error) {
+            console.log(error);
+            toast.error("Something went wrong");
+        }
+    }
+);
+
+const authSlice = createSlice({
+    name: "auth",
+    initialState,
+    reducers: {
+        logout: (state) => {
+            state.isLoggedIn = false;
+            state.role = "";
+            state.data = {};
+            state.usersData = [];
+
+            localStorage.removeItem("token");
+        },
+    },
+    extraReducers: (builder) => {
+        builder
+            .addCase(loginUser.fulfilled, (state, action) => {
+                const payload = action?.payload?.data;
+
+                const token =
+                    payload?.token ||
+                    payload?.accessToken ||
+                    payload?.access_token ||
+                    payload?.data?.token ||
+                    payload?.data?.accessToken;
+
+                const userData =
+                    payload?.data ||
+                    payload?.user ||
+                    payload?.userData ||
+                    payload;
+
+                console.log("[Auth] login response payload:", payload);
+                console.log("[Auth] extracted token:", token);
+                console.log("[Auth] extracted user:", userData);
+
+                if (token) {
+                    localStorage.setItem("token", token);
+                } else {
+                    console.warn("[Auth] No token found in login response. Check backend response shape.");
+                }
+
+                state.isLoggedIn = true;
+                state.role = userData?.role || "";
+                state.data = userData || {};
+            })
+
+            .addCase(getMe.fulfilled, (state, action) => {
+                const userData =
+                    action?.payload?.data?.data ||
+                    action?.payload?.data;
+
+                state.isLoggedIn = true;
+                state.role = userData?.role || "";
+                state.data = userData || {};
+            })
+
+            .addCase(getAllUsers.fulfilled, (state, action) => {
+                const fetchedUsers = action?.payload?.data?.data || action?.payload?.data;
+                state.usersData = Array.isArray(fetchedUsers) ? fetchedUsers : [];
+            })
+
+            .addCase(updateUser.fulfilled, (state, action) => {
+                const updatedUser = action?.payload?.data?.data || action?.payload?.data;
+                if (updatedUser && updatedUser._id) {
+                    state.usersData = state.usersData.map((user) =>
+                        user._id === updatedUser._id ? updatedUser : user
+                    );
+                }
+            })
+
+            .addCase(deleteUser.fulfilled, (state, action) => {
+                if (action.payload && action.payload.userId) {
+                    state.usersData = state.usersData.filter(
+                        (user) => user._id !== action.payload.userId
+                    );
+                }
+            });
+    },
+});
+
+export const { logout } = authSlice.actions;
+
+export default authSlice.reducer;
