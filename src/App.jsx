@@ -2,23 +2,22 @@ import { Routes, Route } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
 
 import HomePage from "./pages/HomePage";
-import LoginPage from "./pages/LoginPage";
-import SignupPage from "./pages/SignupPage";
+import LoginPage from "./pages/auth/Login";
+import SignupPage from "./pages/auth/Signup";
 import AdminDashboard from "./pages/admin/AdminDashborad";
 import ManageBooks from "./pages/admin/ManageBook";
 import Users from "./pages/admin/Users";
+import Orders from "./pages/admin/Orders";
 import ProtectedRoute from "./components/ProtectedRoute";
 
 function App() {
   return (
     <>
       <Routes>
-        {/* Public routes */}
-        <Route path="/"       element={<HomePage />} />
-        <Route path="/login"  element={<LoginPage />} />
+        <Route path="/" element={<HomePage />} />
+        <Route path="/login" element={<LoginPage />} />
         <Route path="/signup" element={<SignupPage />} />
 
-        {/* Admin-only routes */}
         <Route
           path="/admin"
           element={
@@ -40,6 +39,14 @@ function App() {
           element={
             <ProtectedRoute allowedRoles={["admin"]}>
               <Users />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/orders"
+          element={
+            <ProtectedRoute allowedRoles={["admin"]}>
+              <Orders />
             </ProtectedRoute>
           }
         />
