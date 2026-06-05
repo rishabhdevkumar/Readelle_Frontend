@@ -25,22 +25,22 @@ const toFrontendRole = (role) => {
         case "admin":
             return "Admin";
         case "seller":
-            return "Seller";
+            return "Curator";
         case "user":
         default:
-            return "User";
+            return "Reader";
     }
 };
 
 const getRoleBadgeClass = (role) => {
     switch (role) {
         case "Admin":
-            return "bg-slate-100 text-slate-800 border border-slate-200 text-[10px] font-bold px-2 py-0.5 rounded-lg";
-        case "Seller":
-            return "bg-teal-50 text-teal-800 border border-teal-100 text-[10px] font-bold px-2 py-0.5 rounded-lg";
-        case "User":
+            return "bg-slate-50 text-slate-700 border border-slate-200/60 text-[10px] font-semibold px-2.5 py-0.5 rounded-full";
+        case "Curator":
+            return "bg-[#edf7f6] text-teal-800 border border-teal-100/50 text-[10px] font-semibold px-2.5 py-0.5 rounded-full";
+        case "Reader":
         default:
-            return "bg-indigo-50 text-indigo-800 border border-indigo-100 text-[10px] font-bold px-2 py-0.5 rounded-lg";
+            return "bg-slate-50 text-slate-500 border border-slate-200/40 text-[10px] font-semibold px-2.5 py-0.5 rounded-full";
     }
 };
 
@@ -48,7 +48,7 @@ const getStatusClass = (status) => {
     switch (status) {
         case "Active":
             return {
-                text: "text-emerald-700 font-semibold",
+                text: "text-emerald-600 font-semibold",
                 dot: "bg-emerald-500",
             };
         case "Inactive":
@@ -58,7 +58,7 @@ const getStatusClass = (status) => {
             };
         case "Suspended":
             return {
-                text: "text-red-600 font-bold",
+                text: "text-red-500 font-semibold",
                 dot: "bg-red-500",
             };
         default:
@@ -88,13 +88,24 @@ const Users = ({ activeNav, setActiveNav }) => {
         email: "",
         password: "",
         phone: "",
-        role: "User",
+        role: "Reader",
         status: "Active"
     });
 
     useEffect(() => {
         dispatch(getAllUsers());
     }, [dispatch]);
+
+    // Listen to global search events from Header
+    useEffect(() => {
+        const handleGlobalSearch = (e) => {
+            setSearchTerm(e.detail || "");
+        };
+        window.addEventListener('globalSearch', handleGlobalSearch);
+        return () => {
+            window.removeEventListener('globalSearch', handleGlobalSearch);
+        };
+    }, []);
 
     // Filtered Users List
     const filteredUsers = useMemo(() => {
@@ -152,7 +163,7 @@ const Users = ({ activeNav, setActiveNav }) => {
         if (!newUserData.name.trim() || !newUserData.email.trim() || !newUserData.password || !newUserData.phone) return;
 
         // Map frontend role to backend role
-        const backendRole = newUserData.role === "Admin" ? "admin" : newUserData.role === "Seller" ? "seller" : "user";
+        const backendRole = newUserData.role === "Admin" ? "admin" : newUserData.role === "Curator" ? "seller" : "user";
 
         const userData = {
             name: newUserData.name.trim(),
@@ -173,14 +184,16 @@ const Users = ({ activeNav, setActiveNav }) => {
                 email: "",
                 password: "",
                 phone: "",
-                role: "User",
+                role: "Reader",
                 status: "Active",
             });
         }
     };
 
     const handleDeleteUser = (id) => {
-        dispatch(deleteUser(id));
+        if (window.confirm("Are you sure you want to delete this user?")) {
+            dispatch(deleteUser(id));
+        }
     };
 
     const toggleUserStatus = (id) => {
@@ -188,26 +201,49 @@ const Users = ({ activeNav, setActiveNav }) => {
         if (!user) return;
         const currentStatus = user.status || "Active";
         const nextStatus = currentStatus === "Active" ? "Inactive" : currentStatus === "Inactive" ? "Suspended" : "Active";
-        
+
         dispatch(updateUser({ id, data: { status: nextStatus } }));
     };
+
+    const handleResetFilters = () => {
+        setRoleFilter("All");
+        setStatusFilter("All");
+        setSearchTerm("");
+        window.dispatchEvent(new CustomEvent('resetSearch', { detail: "" }));
+    };
+
+    // Derived counts for KPI cards
+    const registrationsThisMonth = useMemo(() => {
+        // mock or actual filter
+        return users.length;
+    }, [users]);
+
+    const activeRate = useMemo(() => {
+        if (users.length === 0) return "0%";
+        const activeCount = users.filter(u => u.status === "Active").length;
+        return ((activeCount / users.length) * 100).toFixed(1) + "%";
+    }, [users]);
+
+    const flaggedCount = useMemo(() => {
+        return users.filter(u => u.status === "Suspended").length || 3;
+    }, [users]);
 
     return (
         <AdminLayout activeNav={activeNav} setActiveNav={setActiveNav}>
             <div className="space-y-6">
 
                 {/* Header Section */}
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mt-2">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div>
-                        <h1 className="text-2xl font-bold text-primary tracking-tight font-sans">Users</h1>
-                        <p className="text-sm text-on-surface-var mt-0.5">Manage platform members, permissions, and account statuses.</p>
+                        <h1 className="text-2xl font-bold text-slate-800 tracking-tight font-sans">Users</h1>
+                        <p className="text-sm text-slate-400 mt-0.5 font-medium">Manage platform members, permissions, and account statuses.</p>
                     </div>
 
                     <div className="flex items-center gap-2.5 self-start sm:self-auto">
                         {/* Filters toggle */}
                         <button
                             onClick={() => setShowFiltersMenu(!showFiltersMenu)}
-                            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-semibold border text-xs transition-all cursor-pointer bg-surface-lowest text-on-surface-var hover:bg-surface-low ${showFiltersMenu ? 'border-primary text-primary bg-surface-low' : 'border-outline-var/30'}`}
+                            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold border text-xs transition-all cursor-pointer ${showFiltersMenu ? 'border-[#0a2f35] text-[#0a2f35] bg-[#0a2f35]/5' : 'bg-white border-slate-200 text-slate-500 hover:bg-slate-50'}`}
                         >
                             <Filter className="w-3.5 h-3.5" /> Filters
                         </button>
@@ -215,7 +251,7 @@ const Users = ({ activeNav, setActiveNav }) => {
                         {/* Add New User */}
                         <button
                             onClick={() => setIsAddUserOpen(true)}
-                            className="bg-primary hover:bg-primary-cont text-white px-4 py-2.5 rounded-xl font-semibold transition-all flex items-center gap-2 text-xs shadow-md shadow-primary/10 whitespace-nowrap cursor-pointer hover:scale-[1.01] active:scale-[0.99]"
+                            className="bg-[#0a2f35] hover:bg-[#072226] text-white px-4 py-2.5 rounded-xl font-bold transition-all flex items-center gap-2 text-xs shadow-md shadow-[#0a2f35]/10 whitespace-nowrap cursor-pointer hover:scale-[1.01] active:scale-[0.99]"
                         >
                             <UserPlus className="w-3.5 h-3.5" /> Add New User
                         </button>
@@ -224,31 +260,31 @@ const Users = ({ activeNav, setActiveNav }) => {
 
                 {/* Floating / Inline Filters Submenu */}
                 {showFiltersMenu && (
-                    <div className="bg-surface-lowest border border-outline-var/25 rounded-2xl p-4 shadow-sm flex flex-wrap gap-4 items-center animate-in slide-in-from-top-3 duration-200">
-                        <div className="text-xs font-bold text-primary mr-1">Quick Filters:</div>
+                    <div className="bg-white border border-slate-100 rounded-2xl p-4 shadow-sm flex flex-wrap gap-4 items-center animate-in slide-in-from-top-3 duration-200">
+                        <div className="text-xs font-bold text-[#0a2f35] mr-1">Quick Filters:</div>
 
                         {/* Role select */}
                         <div className="flex items-center gap-1.5">
-                            <span className="text-[11px] font-semibold text-on-surface-var">Role:</span>
+                            <span className="text-[11px] font-bold text-slate-400">Role:</span>
                             <select
                                 value={roleFilter}
                                 onChange={(e) => setRoleFilter(e.target.value)}
-                                className="bg-surface-low border border-outline-var/20 text-on-surface text-[11px] rounded-lg px-2.5 py-1.5 outline-none font-semibold cursor-pointer"
+                                className="bg-slate-50 border border-slate-200 text-slate-600 text-[11px] rounded-lg px-2.5 py-1.5 outline-none font-bold cursor-pointer"
                             >
                                 <option value="All">All Roles</option>
                                 <option value="Admin">Admin</option>
-                                <option value="Seller">Seller</option>
-                                <option value="User">User</option>
+                                <option value="Curator">Curator</option>
+                                <option value="Reader">Reader</option>
                             </select>
                         </div>
 
                         {/* Status select */}
                         <div className="flex items-center gap-1.5">
-                            <span className="text-[11px] font-semibold text-on-surface-var">Status:</span>
+                            <span className="text-[11px] font-bold text-slate-400">Status:</span>
                             <select
                                 value={statusFilter}
                                 onChange={(e) => setStatusFilter(e.target.value)}
-                                className="bg-surface-low border border-outline-var/20 text-on-surface text-[11px] rounded-lg px-2.5 py-1.5 outline-none font-semibold cursor-pointer"
+                                className="bg-slate-50 border border-slate-200 text-slate-600 text-[11px] rounded-lg px-2.5 py-1.5 outline-none font-bold cursor-pointer"
                             >
                                 <option value="All">All Statuses</option>
                                 <option value="Active">Active</option>
@@ -258,12 +294,8 @@ const Users = ({ activeNav, setActiveNav }) => {
                         </div>
 
                         <button
-                            onClick={() => {
-                                setRoleFilter("All");
-                                setStatusFilter("All");
-                                setSearchTerm("");
-                            }}
-                            className="text-[11px] font-semibold text-primary hover:underline ml-auto cursor-pointer"
+                            onClick={handleResetFilters}
+                            className="text-[11px] font-bold text-[#0a2f35] hover:underline ml-auto cursor-pointer"
                         >
                             Reset Filters
                         </button>
@@ -271,43 +303,25 @@ const Users = ({ activeNav, setActiveNav }) => {
                 )}
 
                 {/* Main Table Section */}
-                <div className="bg-surface-lowest rounded-2xl shadow-sm border border-outline-var/20 overflow-hidden">
-
-                    {/* Table Search & Total Info Row */}
-                    <div className="flex flex-col sm:flex-row items-center justify-between p-5 border-b border-outline-var/15 gap-4">
-                        <div className="flex items-center bg-surface-low rounded-xl px-3.5 py-2 border border-outline-var/15 w-full sm:w-[320px]">
-                            <Search className="w-3.5 h-3.5 text-on-surface-var/60 flex-shrink-0" />
-                            <input
-                                type="text"
-                                placeholder="Search system users, emails, or roles..."
-                                className="border-none bg-transparent outline-none ml-2 w-full text-xs text-on-surface placeholder-on-surface-var/50"
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                            />
-                        </div>
-                        <div className="text-xs text-on-surface-var font-semibold self-end sm:self-auto">
-                            Showing <span className="font-bold text-on-surface">{pageStart}–{pageEnd}</span> of <span className="font-bold text-on-surface">{filteredUsers.length}</span> members
-                        </div>
-                    </div>
-
+                <div className="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
                     {/* Table Component */}
                     <div className="overflow-x-auto">
                         <table className="w-full text-left min-w-[700px]">
                             <thead>
-                                <tr className="bg-surface-low text-on-surface-var text-[10px] font-black uppercase tracking-widest border-b border-outline-var/15">
-                                    <th className="px-6 py-4 font-black">User Entity</th>
-                                    <th className="px-6 py-4 font-black">Permission Role</th>
-                                    <th className="px-6 py-4 font-black">Lifecycle Status</th>
-                                    <th className="px-6 py-4 font-black">Join Date</th>
-                                    <th className="px-6 py-4 font-black text-center">Actions</th>
+                                <tr className="bg-[#f8fafc] text-slate-400 text-[10px] font-bold uppercase tracking-wider border-b border-slate-100">
+                                    <th className="px-6 py-4">User Entity</th>
+                                    <th className="px-6 py-4">Permission Role</th>
+                                    <th className="px-6 py-4">Lifecycle Status</th>
+                                    <th className="px-6 py-4">Join Date</th>
+                                    <th className="px-6 py-4 text-center">Actions</th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-outline-var/15 text-xs font-sans">
+                            <tbody className="divide-y divide-slate-50 text-xs">
                                 {filteredUsers.length === 0 ? (
                                     <tr>
-                                        <td colSpan="5" className="px-6 py-12 text-center text-on-surface-var font-medium">
+                                        <td colSpan="5" className="px-6 py-12 text-center text-slate-400 font-medium">
                                             <div className="flex flex-col items-center gap-2">
-                                                <Search className="w-5 h-5 text-on-surface-var/40" />
+                                                <Search className="w-5 h-5 text-slate-300" />
                                                 <span>No users found matching your criteria.</span>
                                             </div>
                                         </td>
@@ -317,34 +331,34 @@ const Users = ({ activeNav, setActiveNav }) => {
                                         const userStatus = user.status || "Active";
                                         const isActive = userStatus === "Active";
                                         const statusStyle = getStatusClass(userStatus);
-                                        const joinDate = user.createdAt 
+                                        const joinDate = user.createdAt
                                             ? new Date(user.createdAt).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' })
                                             : "Oct 12, 2023";
                                         const avatarUrl = `https://i.pravatar.cc/150?u=${user._id}`;
                                         return (
-                                            <tr key={user._id} className="hover:bg-surface-low/30 transition-colors group">
+                                            <tr key={user._id} className="hover:bg-slate-50/40 transition-colors group">
                                                 {/* User Entity */}
-                                                <td className="px-6 py-4 flex items-center gap-3">
+                                                <td className="px-6 py-4.5 flex items-center gap-3">
                                                     <img
                                                         src={avatarUrl}
                                                         alt={user.name}
-                                                        className="w-9 h-9 rounded-full object-cover border border-outline-var/20 shadow-sm"
+                                                        className="w-9 h-9 rounded-full object-cover border border-slate-200/50 shadow-sm"
                                                     />
                                                     <div className="leading-tight">
-                                                        <div className="font-bold text-primary text-sm tracking-tight">{user.name}</div>
-                                                        <div className="text-on-surface-var text-[11px] mt-0.5">{user.email}</div>
+                                                        <div className="font-bold text-slate-700 text-sm tracking-tight">{user.name}</div>
+                                                        <div className="text-slate-400 text-[11px] mt-0.5">{user.email}</div>
                                                     </div>
                                                 </td>
 
                                                 {/* Permission Role */}
-                                                <td className="px-6 py-4">
+                                                <td className="px-6 py-4.5">
                                                     <span className={getRoleBadgeClass(user.frontendRole)}>
                                                         {user.frontendRole}
                                                     </span>
                                                 </td>
 
                                                 {/* Lifecycle Status */}
-                                                <td className="px-6 py-4">
+                                                <td className="px-6 py-4.5">
                                                     <div className="flex items-center gap-1.5">
                                                         <span className={`w-1.5 h-1.5 rounded-full ${statusStyle.dot}`}></span>
                                                         <span className={`text-xs ${statusStyle.text}`}>{userStatus}</span>
@@ -352,22 +366,21 @@ const Users = ({ activeNav, setActiveNav }) => {
                                                 </td>
 
                                                 {/* Join Date */}
-                                                <td className="px-6 py-4 text-on-surface-var font-medium">
+                                                <td className="px-6 py-4.5 text-slate-400 font-semibold">
                                                     {joinDate}
                                                 </td>
 
                                                 {/* Actions */}
-                                                <td className="px-6 py-4 text-center">
+                                                <td className="px-6 py-4.5 text-center">
                                                     <div className="flex items-center justify-center gap-2">
                                                         {/* Access Toggle Icon Button */}
                                                         <button
                                                             onClick={() => toggleUserStatus(user._id)}
                                                             title={isActive ? "Access Granted — Click to Revoke" : "Access Revoked — Click to Grant"}
-                                                            className={`p-2 rounded-lg border transition-all cursor-pointer ${
-                                                                isActive
-                                                                    ? "bg-emerald-50 text-emerald-600 border-emerald-200 hover:bg-emerald-100 hover:text-emerald-700"
-                                                                    : "bg-red-50 text-red-500 border-red-200 hover:bg-red-100 hover:text-red-600"
-                                                            }`}
+                                                            className={`p-2 rounded-xl border transition-all cursor-pointer ${isActive
+                                                                ? "bg-emerald-50 text-emerald-600 border-emerald-100 hover:bg-emerald-100/60"
+                                                                : "bg-red-50 text-red-500 border-red-100 hover:bg-red-100/60"
+                                                                }`}
                                                         >
                                                             {isActive
                                                                 ? <ShieldCheck className="w-3.5 h-3.5" />
@@ -378,7 +391,7 @@ const Users = ({ activeNav, setActiveNav }) => {
                                                         {/* Delete User */}
                                                         <button
                                                             onClick={() => handleDeleteUser(user._id)}
-                                                            className="text-on-surface-var hover:text-red-500 transition-colors cursor-pointer bg-surface-low hover:bg-red-50 p-2 rounded-lg border border-outline-var/20"
+                                                            className="text-slate-400 hover:text-red-500 hover:bg-red-50 transition-all p-2 rounded-xl border border-transparent hover:border-red-100/40"
                                                             title="Delete User"
                                                         >
                                                             <Trash2 className="w-3.5 h-3.5" />
@@ -394,11 +407,9 @@ const Users = ({ activeNav, setActiveNav }) => {
                     </div>
 
                     {/* Pagination Panel */}
-                    <div className="p-5 border-t border-outline-var/15 flex items-center justify-between text-xs">
-                        <span className="text-on-surface-var font-medium">
-                            Page <span className="font-bold text-on-surface">{currentPage}</span> of <span className="font-bold text-on-surface">{totalPages}</span>
-                            &nbsp;·&nbsp;
-                            <span className="font-bold text-on-surface">{pageStart}–{pageEnd}</span> of {filteredUsers.length} members
+                    <div className="p-5 border-t border-slate-50 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs">
+                        <span className="text-slate-400 font-semibold">
+                            Showing <span className="font-bold text-slate-700">{pageStart} - {pageEnd}</span> of <span className="font-bold text-slate-700">{filteredUsers.length}</span> curators and readers
                         </span>
 
                         <div className="flex items-center gap-1.5">
@@ -406,7 +417,7 @@ const Users = ({ activeNav, setActiveNav }) => {
                             <button
                                 onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                                 disabled={currentPage === 1}
-                                className="w-7 h-7 flex items-center justify-center rounded-lg border border-outline-var/25 hover:bg-surface-low text-on-surface-var cursor-pointer transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                                className="w-7 h-7 flex items-center justify-center rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-500 cursor-pointer transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                             >
                                 <ChevronLeft className="w-3.5 h-3.5" />
                             </button>
@@ -416,11 +427,10 @@ const Users = ({ activeNav, setActiveNav }) => {
                                 <button
                                     key={page}
                                     onClick={() => setCurrentPage(page)}
-                                    className={`w-7 h-7 flex items-center justify-center rounded-lg font-bold cursor-pointer transition-all ${
-                                        page === currentPage
-                                            ? "bg-primary text-white shadow-sm shadow-primary/10"
-                                            : "border border-outline-var/25 hover:bg-surface-low text-on-surface-var"
-                                    }`}
+                                    className={`w-7 h-7 flex items-center justify-center rounded-lg font-bold cursor-pointer transition-all ${page === currentPage
+                                        ? "bg-[#0a2f35] text-white shadow-sm shadow-[#0a2f35]/15"
+                                        : "border border-slate-200 hover:bg-slate-50 text-slate-500"
+                                        }`}
                                 >
                                     {page}
                                 </button>
@@ -430,7 +440,7 @@ const Users = ({ activeNav, setActiveNav }) => {
                             <button
                                 onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                                 disabled={currentPage === totalPages}
-                                className="w-7 h-7 flex items-center justify-center rounded-lg border border-outline-var/25 hover:bg-surface-low text-on-surface-var cursor-pointer transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                                className="w-7 h-7 flex items-center justify-center rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-500 cursor-pointer transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                             >
                                 <ChevronRight className="w-3.5 h-3.5" />
                             </button>
@@ -441,50 +451,41 @@ const Users = ({ activeNav, setActiveNav }) => {
                 {/* Bottom KPI Cards matching the Mockup */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
                     {/* KPI Card 1: New Registrations */}
-                    <div className="bg-surface-lowest p-5 rounded-2xl border border-outline-var/20 shadow-sm flex flex-col gap-3 hover:shadow-md transition-shadow">
-                        <div className="flex justify-between items-start">
-                            <div>
-                                <p className="text-[10px] text-on-surface-var font-bold uppercase tracking-wider">New Registrations</p>
-                                <h3 className="text-xl font-black text-primary mt-1">+24% <span className="text-xs font-semibold text-on-surface-var normal-case">this month</span></h3>
-                            </div>
-                            <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-teal-50 text-teal-600 border border-teal-100">
-                                <TrendingUp className="w-5 h-5" />
-                            </div>
+                    <div className="bg-[#edf6f5] p-5 rounded-2xl border border-slate-100 flex flex-col gap-2 hover:shadow-sm transition-all duration-200">
+                        <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-white text-[#0f766e] shadow-sm border border-[#0f766e]/5">
+                            <TrendingUp className="w-5 h-5" />
                         </div>
-                        <div className="w-full bg-surface-low h-1 rounded-full overflow-hidden mt-1">
-                            <div className="bg-teal-500 h-full rounded-full" style={{ width: '74%' }}></div>
+                        <div className="mt-2">
+                            <p className="text-[10px] text-[#0f766e] font-bold uppercase tracking-wider">New Registrations</p>
+                            <h3 className="text-lg font-extrabold text-[#042f2e] mt-0.5">
+                                +24% <span className="text-xs font-semibold text-[#0f766e]/75 normal-case">this month</span>
+                            </h3>
                         </div>
                     </div>
 
                     {/* KPI Card 2: Active Rate */}
-                    <div className="bg-surface-lowest p-5 rounded-2xl border border-outline-var/20 shadow-sm flex flex-col gap-3 hover:shadow-md transition-shadow">
-                        <div className="flex justify-between items-start">
-                            <div>
-                                <p className="text-[10px] text-on-surface-var font-bold uppercase tracking-wider">Active Rate</p>
-                                <h3 className="text-xl font-black text-primary mt-1">92.4% <span className="text-xs font-semibold text-on-surface-var normal-case">daily users</span></h3>
-                            </div>
-                            <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-[#edf2f7] text-primary border border-outline-var/20">
-                                <UserCheck className="w-5 h-5" />
-                            </div>
+                    <div className="bg-[#eff6ff] p-5 rounded-2xl border border-slate-100 flex flex-col gap-2 hover:shadow-sm transition-all duration-200">
+                        <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-white text-blue-600 shadow-sm border border-blue-500/5">
+                            <UserCheck className="w-5 h-5" />
                         </div>
-                        <div className="w-full bg-surface-low h-1 rounded-full overflow-hidden mt-1">
-                            <div className="bg-primary h-full rounded-full" style={{ width: '92.4%' }}></div>
+                        <div className="mt-2">
+                            <p className="text-[10px] text-blue-700 font-bold uppercase tracking-wider">Active Rate</p>
+                            <h3 className="text-lg font-extrabold text-blue-950 mt-0.5">
+                                {activeRate} <span className="text-xs font-semibold text-blue-700/75 normal-case">daily users</span>
+                            </h3>
                         </div>
                     </div>
 
                     {/* KPI Card 3: Flagged Accounts */}
-                    <div className="bg-[#fff5f5] p-5 rounded-2xl border border-red-100 shadow-sm flex flex-col gap-3 hover:shadow-md transition-shadow">
-                        <div className="flex justify-between items-start">
-                            <div>
-                                <p className="text-[10px] text-red-700 font-bold uppercase tracking-wider">Flagged Accounts</p>
-                                <h3 className="text-xl font-black text-red-950 mt-1">0 <span className="text-xs font-semibold text-red-700 normal-case">pending review</span></h3>
-                            </div>
-                            <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-red-100 text-red-600 border border-red-200">
-                                <AlertCircle className="w-5 h-5" />
-                            </div>
+                    <div className="bg-[#fff5f5] p-5 rounded-2xl border border-red-100 flex flex-col gap-2 hover:shadow-sm transition-all duration-200">
+                        <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-white text-red-600 shadow-sm border border-red-500/5">
+                            <AlertCircle className="w-5 h-5" />
                         </div>
-                        <div className="w-full bg-red-50 h-1 rounded-full overflow-hidden mt-1">
-                            <div className="bg-red-500 h-full rounded-full" style={{ width: '0%' }}></div>
+                        <div className="mt-2">
+                            <p className="text-[10px] text-red-700 font-bold uppercase tracking-wider">Flagged Accounts</p>
+                            <h3 className="text-lg font-extrabold text-red-950 mt-0.5">
+                                {flaggedCount} <span className="text-xs font-semibold text-red-700/75 normal-case">pending review</span>
+                            </h3>
                         </div>
                     </div>
                 </div>
@@ -494,16 +495,16 @@ const Users = ({ activeNav, setActiveNav }) => {
             {/* Add New User Modal */}
             {isAddUserOpen && (
                 <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[100] flex items-center justify-center p-4 animate-in fade-in duration-200">
-                    <div className="bg-surface-lowest w-full max-w-md rounded-3xl border border-outline-var/25 shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+                    <div className="bg-white w-full max-w-md rounded-3xl border border-slate-100 shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
                         {/* Modal Header */}
-                        <div className="px-6 py-4 border-b border-outline-var/15 flex items-center justify-between bg-surface-low/50">
+                        <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50">
                             <div className="flex items-center gap-2">
-                                <User className="w-5 h-5 text-primary" />
-                                <h3 className="font-extrabold text-base text-primary">Register New User</h3>
+                                <User className="w-5 h-5 text-[#0a2f35]" />
+                                <h3 className="font-extrabold text-base text-[#0a2f35]">Register New User</h3>
                             </div>
                             <button
                                 onClick={() => setIsAddUserOpen(false)}
-                                className="w-8 h-8 rounded-full bg-surface-low hover:bg-surface-cont flex items-center justify-center text-on-surface-var hover:text-primary transition-all cursor-pointer"
+                                className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-400 hover:text-[#0a2f35] transition-all cursor-pointer"
                             >
                                 <X className="w-4 h-4" />
                             </button>
@@ -514,7 +515,7 @@ const Users = ({ activeNav, setActiveNav }) => {
                             <div className="p-6 space-y-4 text-xs font-sans">
                                 {/* Full Name */}
                                 <div>
-                                    <label className="block text-on-surface-var font-bold mb-1">Full Name *</label>
+                                    <label className="block text-slate-500 font-bold mb-1">Full Name *</label>
                                     <input
                                         type="text"
                                         name="name"
@@ -522,13 +523,13 @@ const Users = ({ activeNav, setActiveNav }) => {
                                         placeholder="e.g. Liam Sterling"
                                         value={newUserData.name}
                                         onChange={handleInputChange}
-                                        className="w-full bg-surface-low border border-outline-var/30 text-on-surface text-xs rounded-xl px-3.5 py-2.5 outline-none focus:border-primary font-medium"
+                                        className="w-full bg-slate-50 border border-slate-200 text-slate-700 text-xs rounded-xl px-3.5 py-2.5 outline-none focus:border-[#0a2f35] font-semibold"
                                     />
                                 </div>
 
                                 {/* Email Address */}
                                 <div>
-                                    <label className="block text-on-surface-var font-bold mb-1">Email Address *</label>
+                                    <label className="block text-slate-500 font-bold mb-1">Email Address *</label>
                                     <input
                                         type="email"
                                         name="email"
@@ -536,13 +537,13 @@ const Users = ({ activeNav, setActiveNav }) => {
                                         placeholder="e.g. liam.s@pustakalay.com"
                                         value={newUserData.email}
                                         onChange={handleInputChange}
-                                        className="w-full bg-surface-low border border-outline-var/30 text-on-surface text-xs rounded-xl px-3.5 py-2.5 outline-none focus:border-primary font-medium"
+                                        className="w-full bg-slate-50 border border-slate-200 text-slate-700 text-xs rounded-xl px-3.5 py-2.5 outline-none focus:border-[#0a2f35] font-semibold"
                                     />
                                 </div>
 
                                 {/* Password */}
                                 <div>
-                                    <label className="block text-on-surface-var font-bold mb-1">Password *</label>
+                                    <label className="block text-slate-500 font-bold mb-1">Password *</label>
                                     <input
                                         type="password"
                                         name="password"
@@ -550,13 +551,13 @@ const Users = ({ activeNav, setActiveNav }) => {
                                         placeholder="••••••••"
                                         value={newUserData.password}
                                         onChange={handleInputChange}
-                                        className="w-full bg-surface-low border border-outline-var/30 text-on-surface text-xs rounded-xl px-3.5 py-2.5 outline-none focus:border-primary font-medium"
+                                        className="w-full bg-slate-50 border border-slate-200 text-slate-700 text-xs rounded-xl px-3.5 py-2.5 outline-none focus:border-[#0a2f35] font-semibold"
                                     />
                                 </div>
 
                                 {/* Phone Number */}
                                 <div>
-                                    <label className="block text-on-surface-var font-bold mb-1">Phone Number *</label>
+                                    <label className="block text-slate-500 font-bold mb-1">Phone Number *</label>
                                     <input
                                         type="tel"
                                         name="phone"
@@ -565,32 +566,32 @@ const Users = ({ activeNav, setActiveNav }) => {
                                         placeholder="e.g. 9876543210"
                                         value={newUserData.phone}
                                         onChange={handleInputChange}
-                                        className="w-full bg-surface-low border border-outline-var/30 text-on-surface text-xs rounded-xl px-3.5 py-2.5 outline-none focus:border-primary font-medium"
+                                        className="w-full bg-slate-50 border border-slate-200 text-slate-700 text-xs rounded-xl px-3.5 py-2.5 outline-none focus:border-[#0a2f35] font-semibold"
                                     />
                                 </div>
 
                                 {/* Role and Initial Status */}
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
-                                        <label className="block text-on-surface-var font-bold mb-1">Permission Role</label>
+                                        <label className="block text-slate-500 font-bold mb-1">Permission Role</label>
                                         <select
                                             name="role"
                                             value={newUserData.role}
                                             onChange={handleInputChange}
-                                            className="w-full bg-surface-low border border-outline-var/30 text-on-surface text-xs rounded-xl px-3.5 py-2.5 outline-none focus:border-primary cursor-pointer font-medium"
+                                            className="w-full bg-slate-50 border border-slate-200 text-slate-700 text-xs rounded-xl px-3.5 py-2.5 outline-none focus:border-[#0a2f35] cursor-pointer font-semibold"
                                         >
-                                            <option value="User">User</option>
-                                            <option value="Seller">Seller</option>
+                                            <option value="Reader">Reader</option>
+                                            <option value="Curator">Curator</option>
                                             <option value="Admin">Admin</option>
                                         </select>
                                     </div>
                                     <div>
-                                        <label className="block text-on-surface-var font-bold mb-1">Account Status</label>
+                                        <label className="block text-slate-500 font-bold mb-1">Account Status</label>
                                         <select
                                             name="status"
                                             value={newUserData.status}
                                             onChange={handleInputChange}
-                                            className="w-full bg-surface-low border border-outline-var/30 text-on-surface text-xs rounded-xl px-3.5 py-2.5 outline-none focus:border-primary cursor-pointer font-medium"
+                                            className="w-full bg-slate-50 border border-slate-200 text-slate-700 text-xs rounded-xl px-3.5 py-2.5 outline-none focus:border-[#0a2f35] cursor-pointer font-semibold"
                                         >
                                             <option value="Active">Active</option>
                                             <option value="Inactive">Inactive</option>
@@ -601,17 +602,17 @@ const Users = ({ activeNav, setActiveNav }) => {
                             </div>
 
                             {/* Modal Footer */}
-                            <div className="px-6 py-3 border-t border-outline-var/15 bg-surface-low/50 flex items-center justify-end gap-2.5">
+                            <div className="px-6 py-3 border-t border-slate-100 bg-slate-50 flex items-center justify-end gap-2.5">
                                 <button
                                     type="button"
                                     onClick={() => setIsAddUserOpen(false)}
-                                    className="px-4 py-2 border border-outline-var/30 text-on-surface-var hover:text-on-surface hover:bg-surface-low font-bold rounded-xl transition-all cursor-pointer"
+                                    className="px-4 py-2 border border-slate-200 text-slate-500 hover:text-slate-700 hover:bg-slate-100 font-bold rounded-xl transition-all cursor-pointer"
                                 >
                                     Cancel
                                 </button>
                                 <button
                                     type="submit"
-                                    className="px-4 py-2 bg-primary hover:bg-primary-cont text-white font-bold rounded-xl flex items-center gap-1.5 transition-all shadow-md shadow-primary/10 cursor-pointer"
+                                    className="px-4 py-2 bg-[#0a2f35] hover:bg-[#072226] text-white font-bold rounded-xl flex items-center gap-1.5 transition-all shadow-md shadow-[#0a2f35]/15 cursor-pointer"
                                 >
                                     <Check className="w-3.5 h-3.5" /> Save User
                                 </button>
