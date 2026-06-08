@@ -178,7 +178,7 @@ const Orders = ({ activeNav, setActiveNav }) => {
             </div>
             <div className="mt-2">
               <p className="text-[10px] text-teal-200/70 font-bold uppercase tracking-wider">Today's Revenue</p>
-              <h3 className="text-xl font-extrabold text-white mt-0.5">$4,290.50</h3>
+              <h3 className="text-xl font-extrabold text-white mt-0.5">₹4,290.50</h3>
             </div>
           </div>
         </div>
