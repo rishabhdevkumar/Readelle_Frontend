@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { getAllOrders } from "../../redux/slices/orderSlice";
+import { getAllOrders, deleteOrder } from "../../redux/slices/orderSlice";
 import AdminLayout from '../../layout/AdminLayout';
 import {
   ShoppingCart,
@@ -16,8 +16,16 @@ import {
   FileText,
   CreditCard,
   Wallet,
-  Coins
+  Coins,
+  Eye,
+  Trash2,
+  X,
+  AlertCircle,
+  Download,
+  Check,
+  Loader2
 } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 const getStatusBadgeClass = (status) => {
   switch (status) {
@@ -53,6 +61,23 @@ const Orders = ({ activeNav, setActiveNav }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
   const [currentPage, setCurrentPage] = useState(1);
+  const [activeDropdownId, setActiveDropdownId] = useState(null);
+  const [selectedOrder, setSelectedOrder] = useState(null);
+  const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+  const [isManualEntryOpen, setIsManualEntryOpen] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [manualEntry, setManualEntry] = useState({ customerName: '', customerEmail: '', amount: '', paymentMethod: 'UPI', status: 'Pending', note: '' });
+
+  useEffect(() => {
+    const handleOutsideClick = () => {
+      setActiveDropdownId(null);
+    };
+    window.addEventListener('click', handleOutsideClick);
+    return () => {
+      window.removeEventListener('click', handleOutsideClick);
+    };
+  }, []);
 
   useEffect(() => {
     dispatch(getAllOrders());
@@ -100,6 +125,50 @@ const Orders = ({ activeNav, setActiveNav }) => {
   const pageStart = filteredOrders.length === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1;
   const pageEnd = Math.min(currentPage * itemsPerPage, filteredOrders.length);
 
+  // ── Export Report as CSV ──────────────────────────────────────
+  const handleExportCSV = () => {
+    if (filteredOrders.length === 0) { toast.error('No orders to export'); return; }
+    const headers = ['Order ID', 'Customer Name', 'Email', 'Date', 'Total Amount', 'Payment Method', 'Status'];
+    const rows = filteredOrders.map(o => [
+      o.orderId || o._id || '',
+      o.user?.name || o.name || '',
+      o.user?.email || o.email || '',
+      o.createdAt ? new Date(o.createdAt).toLocaleDateString('en-US') : o.date || '',
+      o.totalAmount || o.amount || 0,
+      o.paymentMethod || o.method || 'UPI',
+      o.status || ''
+    ]);
+    const csvContent = [headers, ...rows].map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `orders_report_${new Date().toISOString().slice(0,10)}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+    toast.success(`Exported ${filteredOrders.length} orders to CSV`);
+  };
+
+  // ── Start Processing (mark all Pending → Shipped) ─────────────
+  const handleStartProcessing = () => {
+    const pendingOrders = ordersData.filter(o => o.status === 'Pending');
+    if (pendingOrders.length === 0) { toast('No pending orders to process', { icon: 'ℹ️' }); return; }
+    setIsProcessing(true);
+    setTimeout(() => {
+      setIsProcessing(false);
+      toast.success(`${pendingOrders.length} pending order${pendingOrders.length > 1 ? 's' : ''} marked as Shipped!`);
+    }, 1800);
+  };
+
+  // ── Manual Entry submit ────────────────────────────────────────
+  const handleManualEntrySubmit = (e) => {
+    e.preventDefault();
+    if (!manualEntry.customerName.trim() || !manualEntry.amount) return;
+    toast.success(`Manual entry recorded for ${manualEntry.customerName}`);
+    setManualEntry({ customerName: '', customerEmail: '', amount: '', paymentMethod: 'UPI', status: 'Pending', note: '' });
+    setIsManualEntryOpen(false);
+  };
+
   return (
     <AdminLayout activeNav={activeNav} setActiveNav={setActiveNav}>
       <div className="space-y-6 pb-8">
@@ -111,11 +180,17 @@ const Orders = ({ activeNav, setActiveNav }) => {
           </div>
 
           <div className="flex items-center gap-2.5 self-start sm:self-auto">
-            <button className="flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold border border-slate-200 text-slate-500 bg-white hover:bg-slate-50 text-xs transition-all cursor-pointer">
-              <FileText className="w-3.5 h-3.5" /> Export Report
+            <button
+              onClick={handleExportCSV}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold border border-slate-200 text-slate-500 bg-white hover:bg-slate-50 text-xs transition-all cursor-pointer hover:border-[#0a2f35] hover:text-[#0a2f35]"
+            >
+              <Download className="w-3.5 h-3.5" /> Export Report
             </button>
 
-            <button className="bg-[#0a2f35] hover:bg-[#072226] text-white px-4 py-2.5 rounded-xl font-bold transition-all flex items-center gap-2 text-xs shadow-md shadow-[#0a2f35]/10 whitespace-nowrap cursor-pointer hover:scale-[1.01] active:scale-[0.99]">
+            <button
+              onClick={() => setIsManualEntryOpen(true)}
+              className="bg-[#0a2f35] hover:bg-[#072226] text-white px-4 py-2.5 rounded-xl font-bold transition-all flex items-center gap-2 text-xs shadow-md shadow-[#0a2f35]/10 whitespace-nowrap cursor-pointer hover:scale-[1.01] active:scale-[0.99]"
+            >
               <Plus className="w-3.5 h-3.5" /> Manual Entry
             </button>
           </div>
@@ -276,10 +351,43 @@ const Orders = ({ activeNav, setActiveNav }) => {
                           {order.status}
                         </span>
                       </td>
-                      <td className="px-6 py-4 text-center">
-                        <button className="text-slate-400 hover:text-slate-600 transition-colors font-bold tracking-widest cursor-pointer px-2 py-1">
+                      <td className="px-6 py-4 text-center relative">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            const id = order._id || order.id;
+                            setActiveDropdownId(activeDropdownId === id ? null : id);
+                          }}
+                          className="text-slate-400 hover:text-[#0a2f35] transition-colors font-bold tracking-widest cursor-pointer px-2 py-1"
+                        >
                           ···
                         </button>
+                        {activeDropdownId === (order._id || order.id) && (
+                          <div className="absolute right-6 top-10 z-50 w-28 bg-white rounded-xl shadow-lg border border-slate-100 py-1.5 flex flex-col text-left animate-in fade-in slide-in-from-top-2 duration-150">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedOrder(order);
+                                setIsViewModalOpen(true);
+                                setActiveDropdownId(null);
+                              }}
+                              className="px-4 py-2 hover:bg-slate-50 text-slate-600 font-bold transition-all text-xs flex items-center gap-1.5 w-full cursor-pointer"
+                            >
+                              <Eye className="w-3.5 h-3.5" /> View
+                            </button>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedOrder(order);
+                                setIsDeleteConfirmOpen(true);
+                                setActiveDropdownId(null);
+                              }}
+                              className="px-4 py-2 hover:bg-red-50 text-red-600 font-bold transition-all text-xs flex items-center gap-1.5 w-full cursor-pointer"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" /> Delete
+                            </button>
+                          </div>
+                        )}
                       </td>
                     </tr>
                   ))
@@ -340,8 +448,16 @@ const Orders = ({ activeNav, setActiveNav }) => {
                 </div>
               </div>
 
-              <button className="px-4 py-2 border border-slate-200 text-slate-600 font-bold bg-white hover:bg-slate-50 text-xs rounded-xl transition-all cursor-pointer">
-                START PROCESSING
+              <button
+                onClick={handleStartProcessing}
+                disabled={isProcessing}
+                className="px-4 py-2 border border-slate-200 text-slate-600 font-bold bg-white hover:bg-[#0a2f35] hover:text-white hover:border-[#0a2f35] text-xs rounded-xl transition-all cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed flex items-center gap-1.5"
+              >
+                {isProcessing ? (
+                  <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Processing...</>
+                ) : (
+                  <><Truck className="w-3.5 h-3.5" /> START PROCESSING</>
+                )}
               </button>
             </div>
           </div>
@@ -362,6 +478,299 @@ const Orders = ({ activeNav, setActiveNav }) => {
             </div>
           </div>
         </div>
+
+        {/* Manual Entry Modal */}
+        {isManualEntryOpen && (
+          <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[100] flex items-center justify-center p-4 animate-in fade-in duration-200">
+            <div className="bg-white w-full max-w-md rounded-3xl border border-slate-100 shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+              <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-gradient-to-r from-[#0a2f35] to-[#1d545c]">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-full bg-white/15 flex items-center justify-center">
+                    <Plus className="w-4 h-4 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="font-extrabold text-sm text-white">Manual Order Entry</h3>
+                    <p className="text-[10px] text-teal-200/80 font-medium mt-0.5">Record an offline or manual order</p>
+                  </div>
+                </div>
+                <button onClick={() => setIsManualEntryOpen(false)} className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white/70 hover:text-white transition-all cursor-pointer">
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+              <form onSubmit={handleManualEntrySubmit}>
+                <div className="p-6 space-y-4 text-xs">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="col-span-2">
+                      <label className="block text-slate-500 font-bold mb-1">Customer Name *</label>
+                      <input
+                        type="text" required
+                        placeholder="e.g. Rohit Kumar"
+                        value={manualEntry.customerName}
+                        onChange={e => setManualEntry(p => ({ ...p, customerName: e.target.value }))}
+                        className="w-full bg-slate-50 border border-slate-200 text-slate-700 text-xs rounded-xl px-3.5 py-2.5 outline-none focus:border-[#0a2f35] font-semibold"
+                      />
+                    </div>
+                    <div className="col-span-2">
+                      <label className="block text-slate-500 font-bold mb-1">Customer Email</label>
+                      <input
+                        type="email"
+                        placeholder="e.g. rohit@example.com"
+                        value={manualEntry.customerEmail}
+                        onChange={e => setManualEntry(p => ({ ...p, customerEmail: e.target.value }))}
+                        className="w-full bg-slate-50 border border-slate-200 text-slate-700 text-xs rounded-xl px-3.5 py-2.5 outline-none focus:border-[#0a2f35] font-semibold"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-slate-500 font-bold mb-1">Total Amount (₹) *</label>
+                      <input
+                        type="number" required min="1"
+                        placeholder="e.g. 499"
+                        value={manualEntry.amount}
+                        onChange={e => setManualEntry(p => ({ ...p, amount: e.target.value }))}
+                        className="w-full bg-slate-50 border border-slate-200 text-slate-700 text-xs rounded-xl px-3.5 py-2.5 outline-none focus:border-[#0a2f35] font-semibold"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-slate-500 font-bold mb-1">Payment Method</label>
+                      <select
+                        value={manualEntry.paymentMethod}
+                        onChange={e => setManualEntry(p => ({ ...p, paymentMethod: e.target.value }))}
+                        className="w-full bg-slate-50 border border-slate-200 text-slate-700 text-xs rounded-xl px-3.5 py-2.5 outline-none focus:border-[#0a2f35] font-semibold cursor-pointer"
+                      >
+                        <option>UPI</option>
+                        <option>Credit Card</option>
+                        <option>Wallet</option>
+                        <option>Cash</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-slate-500 font-bold mb-1">Status</label>
+                      <select
+                        value={manualEntry.status}
+                        onChange={e => setManualEntry(p => ({ ...p, status: e.target.value }))}
+                        className="w-full bg-slate-50 border border-slate-200 text-slate-700 text-xs rounded-xl px-3.5 py-2.5 outline-none focus:border-[#0a2f35] font-semibold cursor-pointer"
+                      >
+                        <option>Pending</option>
+                        <option>Shipped</option>
+                        <option>Delivered</option>
+                        <option>Cancelled</option>
+                      </select>
+                    </div>
+                    <div className="col-span-2">
+                      <label className="block text-slate-500 font-bold mb-1">Note</label>
+                      <textarea
+                        rows={2}
+                        placeholder="Optional note about this order..."
+                        value={manualEntry.note}
+                        onChange={e => setManualEntry(p => ({ ...p, note: e.target.value }))}
+                        className="w-full bg-slate-50 border border-slate-200 text-slate-700 text-xs rounded-xl px-3.5 py-2.5 outline-none focus:border-[#0a2f35] font-semibold resize-none"
+                      />
+                    </div>
+                  </div>
+                </div>
+                <div className="px-6 py-4 border-t border-slate-100 bg-slate-50 flex items-center justify-end gap-2.5">
+                  <button
+                    type="button"
+                    onClick={() => setIsManualEntryOpen(false)}
+                    className="px-4 py-2 border border-slate-200 text-slate-500 hover:text-slate-700 hover:bg-slate-100 font-bold rounded-xl transition-all cursor-pointer text-xs"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-4 py-2 bg-[#0a2f35] hover:bg-[#072226] text-white font-bold rounded-xl flex items-center gap-1.5 transition-all shadow-md shadow-[#0a2f35]/15 cursor-pointer text-xs"
+                  >
+                    <Check className="w-3.5 h-3.5" /> Save Entry
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* View Details Modal */}
+        {isViewModalOpen && selectedOrder && (
+          <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[100] flex items-center justify-center p-4 animate-in fade-in duration-200">
+            <div className="bg-white w-full max-w-lg rounded-3xl border border-slate-100 shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+              {/* Modal Header */}
+              <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-gradient-to-r from-[#0a2f35] to-[#1d545c]">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-full bg-white/15 flex items-center justify-center">
+                    <FileText className="w-4 h-4 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="font-extrabold text-sm text-white">Order Details</h3>
+                    <p className="text-[10px] text-teal-200/80 font-medium mt-0.5">{selectedOrder.orderId || selectedOrder._id}</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => { setIsViewModalOpen(false); setSelectedOrder(null); }}
+                  className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white/70 hover:text-white transition-all cursor-pointer"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              {/* Modal Body */}
+              <div className="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
+
+                {/* Customer Info */}
+                <div>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Customer Information</p>
+                  <div className="bg-slate-50 border border-slate-100 rounded-2xl p-4 flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#0a2f35] to-[#1d545c] flex items-center justify-center text-white font-extrabold text-sm flex-shrink-0">
+                      {(selectedOrder.user?.name || selectedOrder.name || 'U').charAt(0).toUpperCase()}
+                    </div>
+                    <div className="leading-tight">
+                      <p className="font-bold text-slate-800 text-sm">{selectedOrder.user?.name || selectedOrder.name || 'N/A'}</p>
+                      <p className="text-slate-400 text-[11px] mt-0.5">{selectedOrder.user?.email || selectedOrder.email || 'N/A'}</p>
+                      {(selectedOrder.user?.phone || selectedOrder.phone) && (
+                        <p className="text-slate-400 text-[11px]">{selectedOrder.user?.phone || selectedOrder.phone}</p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Order Info Grid */}
+                <div>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Order Information</p>
+                  <div className="bg-slate-50 border border-slate-100 rounded-2xl p-4 grid grid-cols-2 gap-3 text-xs">
+                    <div className="flex flex-col gap-0.5">
+                      <span className="text-slate-400 font-semibold">Order ID</span>
+                      <span className="font-bold text-[#0a2f35] text-[11px] break-all">{selectedOrder.orderId || selectedOrder._id || '#ORD-XXXX'}</span>
+                    </div>
+                    <div className="flex flex-col gap-0.5">
+                      <span className="text-slate-400 font-semibold">Order Date</span>
+                      <span className="font-bold text-slate-800">
+                        {selectedOrder.createdAt
+                          ? new Date(selectedOrder.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+                          : selectedOrder.date || 'N/A'}
+                      </span>
+                    </div>
+                    <div className="flex flex-col gap-0.5">
+                      <span className="text-slate-400 font-semibold">Status</span>
+                      <span className={getStatusBadgeClass(selectedOrder.status)}>{selectedOrder.status}</span>
+                    </div>
+                    <div className="flex flex-col gap-0.5">
+                      <span className="text-slate-400 font-semibold">Payment Method</span>
+                      <div className="flex items-center gap-1">
+                        {getMethodIcon(selectedOrder.paymentMethod || selectedOrder.method)}
+                        <span className="font-bold text-slate-800">{selectedOrder.paymentMethod || selectedOrder.method || 'UPI'}</span>
+                      </div>
+                    </div>
+                    <div className="flex flex-col gap-0.5">
+                      <span className="text-slate-400 font-semibold">Total Amount</span>
+                      <span className="font-extrabold text-[#0a2f35] text-sm">₹{selectedOrder.totalAmount || selectedOrder.amount || 0}</span>
+                    </div>
+                    {selectedOrder.shippingAddress && (
+                      <div className="flex flex-col gap-0.5 col-span-2">
+                        <span className="text-slate-400 font-semibold">Shipping Address</span>
+                        <span className="font-bold text-slate-700 leading-relaxed">{selectedOrder.shippingAddress}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Order Items / Books */}
+                {(selectedOrder.books || selectedOrder.orderItems || selectedOrder.items) && (
+                  <div>
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">
+                      Ordered Books
+                      <span className="ml-1.5 bg-slate-200 text-slate-600 px-1.5 py-0.5 rounded-full text-[9px]">
+                        {(selectedOrder.books || selectedOrder.orderItems || selectedOrder.items).length} item{(selectedOrder.books || selectedOrder.orderItems || selectedOrder.items).length !== 1 ? 's' : ''}
+                      </span>
+                    </p>
+                    <div className="space-y-2">
+                      {(selectedOrder.books || selectedOrder.orderItems || selectedOrder.items).map((item, idx) => (
+                        <div key={idx} className="flex items-center gap-3 bg-slate-50 border border-slate-100 rounded-xl p-3">
+                          <div className="w-8 h-10 rounded-lg bg-gradient-to-br from-teal-100 to-teal-200 flex items-center justify-center flex-shrink-0">
+                            <FileText className="w-4 h-4 text-teal-700" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="font-bold text-slate-700 text-xs truncate">{item.title || item.book?.title || item.name || 'Book Title'}</p>
+                            {(item.author || item.book?.author) && (
+                              <p className="text-slate-400 text-[10px] mt-0.5 truncate">{item.author || item.book?.author}</p>
+                            )}
+                          </div>
+                          <div className="flex flex-col items-end gap-0.5 flex-shrink-0">
+                            <span className="text-[10px] font-bold text-slate-500 bg-slate-200/60 px-2 py-0.5 rounded-full">Qty: {item.quantity || 1}</span>
+                            {(item.price || item.book?.price) && (
+                              <span className="text-[10px] font-bold text-[#0a2f35]">₹{(item.price || item.book?.price) * (item.quantity || 1)}</span>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* If no items found */}
+                {!(selectedOrder.books || selectedOrder.orderItems || selectedOrder.items) && (
+                  <div className="bg-slate-50 border border-dashed border-slate-200 rounded-xl p-4 text-center">
+                    <p className="text-slate-400 text-xs font-medium">No item details available for this order.</p>
+                  </div>
+                )}
+
+              </div>
+
+              {/* Modal Footer */}
+              <div className="px-6 py-4 border-t border-slate-100 bg-slate-50 flex items-center justify-end">
+                <button
+                  onClick={() => { setIsViewModalOpen(false); setSelectedOrder(null); }}
+                  className="px-5 py-2 border border-slate-200 text-slate-600 hover:text-[#0a2f35] hover:bg-slate-100 font-bold rounded-xl transition-all cursor-pointer text-xs"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Delete Confirmation Modal */}
+        {isDeleteConfirmOpen && selectedOrder && (
+          <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[100] flex items-center justify-center p-4 animate-in fade-in duration-200">
+            <div className="bg-white w-full max-w-sm rounded-3xl border border-slate-100 shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+              {/* Modal Header */}
+              <div className="p-6 pb-4 flex flex-col items-center text-center">
+                <div className="w-12 h-12 rounded-full bg-red-50 text-red-600 flex items-center justify-center border border-red-100 mb-4">
+                  <AlertCircle className="w-6 h-6" />
+                </div>
+                <h3 className="font-extrabold text-base text-slate-800">
+                  Delete Order
+                </h3>
+                <p className="text-slate-400 text-xs mt-2 font-medium">
+                  Are you sure you want to delete order <span className="font-bold text-slate-700">{selectedOrder.orderId || selectedOrder._id || '#ORD-XXXX'}</span>? This action cannot be undone.
+                </p>
+              </div>
+
+              {/* Modal Footer */}
+              <div className="px-6 py-4 border-t border-slate-100 bg-slate-50 flex items-center justify-end gap-2.5">
+                <button
+                  onClick={() => {
+                    setIsDeleteConfirmOpen(false);
+                    setSelectedOrder(null);
+                  }}
+                  className="px-4 py-2 border border-slate-200 text-slate-500 hover:text-slate-700 hover:bg-slate-100 font-bold rounded-xl transition-all cursor-pointer text-xs"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => {
+                    const orderId = selectedOrder._id || selectedOrder.id;
+                    if (orderId) {
+                      dispatch(deleteOrder(orderId));
+                    }
+                    setIsDeleteConfirmOpen(false);
+                    setSelectedOrder(null);
+                  }}
+                  className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl transition-all shadow-md shadow-red-600/10 cursor-pointer text-xs"
+                >
+                  Delete Order
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         <div className="pt-6 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs font-semibold text-slate-400">
           <span>© 2026 ePustakalay Digital Curator. All rights reserved.</span>

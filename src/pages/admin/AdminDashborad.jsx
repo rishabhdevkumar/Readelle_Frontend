@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
 import AdminLayout from "../../layout/AdminLayout";
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid,
@@ -13,11 +14,16 @@ import {
   Calendar,
   Activity,
   Sparkles,
-  TrendingUp
+  TrendingUp,
+  Eye,
+  Trash2,
+  X,
+  AlertCircle
 } from "lucide-react";
 import { getAllBooks } from "../../redux/slices/bookSlice";
 import { getAllCategories } from "../../redux/slices/categorySlice";
 import { getAllUsers } from "../../redux/slices/authSlice";
+import { getAllOrders, deleteOrder } from "../../redux/slices/orderSlice";
 
 const C = {
   primary: "#0a2f35",
@@ -46,11 +52,41 @@ const salesData = [
   { month: "JUL", rev: 95000 },
 ];
 
-const orders = [
-  { id: "#EP-9021", name: "Vikram Rathore", initials: "VR", hue: 180, date: "Oct 24, 2023", amount: "₹1,250.00", status: "Shipped", badge: "bg-blue-50 text-blue-700 border border-blue-100" },
-  { id: "#EP-9020", name: "Ananya Iyer", initials: "AI", hue: 140, date: "Oct 24, 2023", amount: "₹890.00", status: "Delivered", badge: "bg-emerald-50 text-emerald-700 border border-emerald-100" },
-  { id: "#EP-9019", name: "Rahul Mehra", initials: "RM", hue: 220, date: "Oct 23, 2023", amount: "₹2,100.00", status: "Processing", badge: "bg-amber-50 text-amber-700 border border-amber-100" },
-];
+// ── Resolve customer name/email from any backend shape ──────────
+const getCustomerName = (o) =>
+  o?.user?.name ||
+  o?.userId?.name ||
+  o?.customer?.name ||
+  o?.customerName ||
+  o?.buyerName ||
+  o?.name ||
+  'N/A';
+
+const getCustomerEmail = (o) =>
+  o?.user?.email ||
+  o?.userId?.email ||
+  o?.customer?.email ||
+  o?.customerEmail ||
+  o?.buyerEmail ||
+  o?.email ||
+  '';
+
+const getStatusBadgeClass = (status) => {
+  const norm = String(status || "").toUpperCase();
+  switch (norm) {
+    case 'DELIVERED':
+      return 'bg-emerald-50 text-emerald-700 border border-emerald-100 px-2.5 py-0.5 rounded-full text-[9px] font-semibold';
+    case 'PENDING':
+      return 'bg-amber-50 text-amber-700 border border-amber-100 px-2.5 py-0.5 rounded-full text-[9px] font-semibold';
+    case 'CONFIRMED':
+    case 'SHIPPED':
+      return 'bg-blue-50 text-blue-700 border border-blue-100 px-2.5 py-0.5 rounded-full text-[9px] font-semibold';
+    case 'CANCELLED':
+      return 'bg-red-50 text-red-700 border border-red-100 px-2.5 py-0.5 rounded-full text-[9px] font-semibold';
+    default:
+      return 'bg-slate-50 text-slate-600 border border-slate-200 px-2.5 py-0.5 rounded-full text-[9px] font-semibold';
+  }
+};
 
 function Avatar({ initials, hue, size = 30 }) {
   return (
@@ -118,15 +154,33 @@ function KpiCard({ icon, badge, badgeClass, label, value, bottom }) {
 const AdminDashboard = ({ activeNav, setActiveNav }) => {
   const [range, setRange] = useState("30");
   const dispatch = useDispatch();
+  const navigate = useNavigate();
 
   const booksData = useSelector((state) => state.book.booksData) || [];
   const categoriesData = useSelector((state) => state.category.categoriesData) || [];
   const usersData = useSelector((state) => state.auth.usersData) || [];
+  const ordersData = useSelector((state) => state.order.ordersData) || [];
+
+  const [selectedOrder, setSelectedOrder] = useState(null);
+  const [isActionsModalOpen, setIsActionsModalOpen] = useState(false);
+  const [activeDropdownId, setActiveDropdownId] = useState(null);
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+
+  useEffect(() => {
+    const handleOutsideClick = () => {
+      setActiveDropdownId(null);
+    };
+    window.addEventListener('click', handleOutsideClick);
+    return () => {
+      window.removeEventListener('click', handleOutsideClick);
+    };
+  }, []);
 
   useEffect(() => {
     dispatch(getAllBooks());
     dispatch(getAllCategories());
     dispatch(getAllUsers());
+    dispatch(getAllOrders());
   }, [dispatch]);
 
   const activeUsersCount = useMemo(() => {
@@ -168,7 +222,7 @@ const AdminDashboard = ({ activeNav, setActiveNav }) => {
     }));
   }, [booksData, categoriesData]);
 
-  // Listen to globalSearch event as a mock search filter on orders
+  // Listen to globalSearch event as a search filter on orders
   const [searchVal, setSearchVal] = useState("");
   useEffect(() => {
     const handleSearch = (e) => setSearchVal(e.detail || "");
@@ -177,12 +231,19 @@ const AdminDashboard = ({ activeNav, setActiveNav }) => {
   }, []);
 
   const filteredOrders = useMemo(() => {
-    return orders.filter(o => 
-      o.name.toLowerCase().includes(searchVal.toLowerCase()) || 
-      o.id.toLowerCase().includes(searchVal.toLowerCase()) ||
-      o.status.toLowerCase().includes(searchVal.toLowerCase())
-    );
-  }, [searchVal]);
+    const sorted = [...ordersData].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    return sorted.filter(o => {
+      const orderId = o.orderId || o._id || "";
+      const customerName = o.user?.name || o.name || "";
+      const status = o.status || "";
+      
+      return (
+        orderId.toLowerCase().includes(searchVal.toLowerCase()) ||
+        customerName.toLowerCase().includes(searchVal.toLowerCase()) ||
+        status.toLowerCase().includes(searchVal.toLowerCase())
+      );
+    }).slice(0, 5);
+  }, [ordersData, searchVal]);
 
   return (
     <AdminLayout activeNav={activeNav} setActiveNav={setActiveNav}>
@@ -360,33 +421,229 @@ const AdminDashboard = ({ activeNav, setActiveNav }) => {
                       No matching orders found.
                     </td>
                   </tr>
-                ) : filteredOrders.map(o => (
-                  <tr key={o.id} className="hover:bg-slate-50/40 transition-colors">
-                    <td className="px-6 py-4 text-xs font-bold text-slate-800">{o.id}</td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-2.5">
-                        <Avatar initials={o.initials} hue={o.hue} size={30} />
-                        <span className="text-xs text-slate-600 font-semibold">{o.name}</span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 text-xs text-slate-400 font-semibold">{o.date}</td>
-                    <td className="px-6 py-4 text-xs font-bold text-slate-700">{o.amount}</td>
-                    <td className="px-6 py-4">
-                      <span className={`px-2.5 py-0.5 rounded-full text-[9px] font-semibold ${o.badge}`}>
-                        {o.status}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-center">
-                      <button className="text-slate-400 hover:text-slate-600 transition-colors font-bold tracking-widest cursor-pointer">
-                        ···
-                      </button>
-                    </td>
-                  </tr>
-                ))}
+                ) : filteredOrders.map(o => {
+                  const customerName = getCustomerName(o);
+                  const customerEmail = getCustomerEmail(o);
+                  const initials = customerName !== 'N/A'
+                    ? customerName.split(" ").map(w => w[0]).slice(0, 2).join("").toUpperCase()
+                    : '?';
+                  const hash = Array.from(customerName).reduce((acc, char) => acc + char.charCodeAt(0), 0);
+                  const hue = hash % 360;
+                  return (
+                    <tr key={o._id || o.id} className="hover:bg-slate-50/40 transition-colors">
+                      <td className="px-6 py-4 text-xs font-bold text-slate-800">{o.orderId || o._id || "#ORD-XXXX"}</td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-2.5">
+                          <Avatar initials={initials} hue={hue} size={30} />
+                          <div className="leading-tight">
+                            <div className="text-xs text-slate-600 font-semibold">{customerName}</div>
+                            <div className="text-slate-400 text-[9px] mt-0.5">{customerEmail}</div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 text-xs text-slate-400 font-semibold">
+                        {o.createdAt
+                          ? new Date(o.createdAt).toLocaleDateString("en-US", {
+                              month: "short",
+                              day: "numeric",
+                              year: "numeric",
+                            })
+                          : o.date || "N/A"}
+                      </td>
+                      <td className="px-6 py-4 text-xs font-bold text-slate-700">₹{o.totalAmount || o.amount || 0}</td>
+                      <td className="px-6 py-4">
+                        <span className={`px-2.5 py-0.5 rounded-full text-[9px] font-semibold ${getStatusBadgeClass(o.status)}`}>
+                          {o.status}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-center relative">
+                        <button 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            const id = o._id || o.id;
+                            setActiveDropdownId(activeDropdownId === id ? null : id);
+                          }}
+                          className="text-slate-400 hover:text-[#0a2f35] transition-colors font-bold tracking-widest cursor-pointer px-2 py-1"
+                        >
+                          ···
+                        </button>
+                        {activeDropdownId === (o._id || o.id) && (
+                          <div className="absolute right-6 top-10 z-50 w-28 bg-white rounded-xl shadow-lg border border-slate-100 py-1.5 flex flex-col text-left animate-in fade-in slide-in-from-top-2 duration-150">
+                            <button
+                              onClick={() => {
+                                setSelectedOrder(o);
+                                setIsActionsModalOpen(true);
+                                setActiveDropdownId(null);
+                              }}
+                              className="px-4 py-2 hover:bg-slate-50 text-slate-600 font-bold transition-all text-xs flex items-center gap-1.5 w-full cursor-pointer"
+                            >
+                              <Eye className="w-3.5 h-3.5" /> View
+                            </button>
+                            <button
+                              onClick={() => {
+                                setSelectedOrder(o);
+                                setIsDeleteConfirmOpen(true);
+                                setActiveDropdownId(null);
+                              }}
+                              className="px-4 py-2 hover:bg-red-50 text-red-600 font-bold transition-all text-xs flex items-center gap-1.5 w-full cursor-pointer"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" /> Delete
+                            </button>
+                          </div>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
         </div>
+
+        {/* Actions Modal */}
+        {isActionsModalOpen && selectedOrder && (
+          <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[100] flex items-center justify-center p-4 animate-in fade-in duration-200">
+            <div className="bg-white w-full max-w-md rounded-3xl border border-slate-100 shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+              
+              {/* Modal Header */}
+              <div className="px-6 py-4.5 border-b border-slate-100 flex items-center justify-between bg-slate-50">
+                <h3 className="font-extrabold text-sm text-[#0a2f35]">
+                  Order {selectedOrder.orderId || selectedOrder._id || "#ORD-XXXX"}
+                </h3>
+                <button 
+                  onClick={() => {
+                    setIsActionsModalOpen(false);
+                    setSelectedOrder(null);
+                  }}
+                  className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-400 hover:text-[#0a2f35] transition-all cursor-pointer"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              {/* Modal Body */}
+              <div className="p-6 space-y-6 text-xs text-slate-600">
+                {/* Order Snapshot */}
+                <div className="bg-slate-50 border border-slate-100 rounded-2xl p-4 space-y-3">
+                  <div className="flex justify-between items-center">
+                    <span className="text-slate-400 font-semibold">Customer:</span>
+                    <span className="font-bold text-slate-800">{getCustomerName(selectedOrder)}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-slate-400 font-semibold">Email:</span>
+                    <span className="font-bold text-slate-800">{getCustomerEmail(selectedOrder) || 'N/A'}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-slate-400 font-semibold">Amount:</span>
+                    <span className="font-bold text-[#0a2f35] text-sm">
+                      ₹{selectedOrder.totalAmount || selectedOrder.amount || 0}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-slate-400 font-semibold">Date:</span>
+                    <span className="font-bold text-slate-800">
+                      {selectedOrder.createdAt
+                        ? new Date(selectedOrder.createdAt).toLocaleDateString("en-US", {
+                            month: "short",
+                            day: "numeric",
+                            year: "numeric",
+                          })
+                        : selectedOrder.date || "N/A"}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-slate-400 font-semibold">Status:</span>
+                    <span className={getStatusBadgeClass(selectedOrder.status)}>
+                      {selectedOrder.status}
+                    </span>
+                  </div>
+                  {selectedOrder.paymentMethod && (
+                    <div className="flex justify-between items-center">
+                      <span className="text-slate-400 font-semibold">Method:</span>
+                      <span className="font-bold text-slate-800">{selectedOrder.paymentMethod}</span>
+                    </div>
+                  )}
+                  {selectedOrder.shippingAddress && (
+                    <div className="flex flex-col gap-1 pt-1 border-t border-slate-200/50">
+                      <span className="text-slate-400 font-semibold">Shipping Address:</span>
+                      <span className="font-bold text-slate-800 whitespace-pre-line leading-relaxed">
+                        {selectedOrder.shippingAddress}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Modal Footer */}
+              <div className="px-6 py-4 border-t border-slate-100 bg-slate-50 flex items-center justify-end gap-2.5">
+                <button 
+                  onClick={() => {
+                    setIsActionsModalOpen(false);
+                    navigate(`/admin/orders?search=${selectedOrder.orderId || selectedOrder._id || ""}`);
+                  }}
+                  className="px-4.5 py-2 border border-slate-200 text-slate-500 hover:text-[#0a2f35] hover:bg-slate-100/50 font-bold rounded-xl transition-all cursor-pointer flex items-center gap-1.5 text-xs"
+                >
+                  <Eye className="w-3.5 h-3.5" /> View Details
+                </button>
+                <button 
+                  onClick={() => {
+                    setIsActionsModalOpen(false);
+                    setSelectedOrder(null);
+                  }}
+                  className="px-4.5 py-2 bg-[#0a2f35] hover:bg-[#072226] text-white font-bold rounded-xl transition-all cursor-pointer text-xs"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Delete Confirmation Modal */}
+        {isDeleteConfirmOpen && selectedOrder && (
+          <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[100] flex items-center justify-center p-4 animate-in fade-in duration-200">
+            <div className="bg-white w-full max-w-sm rounded-3xl border border-slate-100 shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+              {/* Modal Header */}
+              <div className="p-6 pb-4 flex flex-col items-center text-center">
+                <div className="w-12 h-12 rounded-full bg-red-50 text-red-600 flex items-center justify-center border border-red-100 mb-4">
+                  <AlertCircle className="w-6 h-6" />
+                </div>
+                <h3 className="font-extrabold text-base text-slate-800">
+                  Delete Order
+                </h3>
+                <p className="text-slate-400 text-xs mt-2 font-medium">
+                  Are you sure you want to delete order <span className="font-bold text-slate-700">{selectedOrder.orderId || selectedOrder._id || '#ORD-XXXX'}</span>? This action cannot be undone.
+                </p>
+              </div>
+
+              {/* Modal Footer */}
+              <div className="px-6 py-4 border-t border-slate-100 bg-slate-50 flex items-center justify-end gap-2.5">
+                <button
+                  onClick={() => {
+                    setIsDeleteConfirmOpen(false);
+                    setSelectedOrder(null);
+                  }}
+                  className="px-4 py-2 border border-slate-200 text-slate-500 hover:text-slate-700 hover:bg-slate-100 font-bold rounded-xl transition-all cursor-pointer text-xs"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => {
+                    const orderId = selectedOrder._id || selectedOrder.id;
+                    if (orderId) {
+                      dispatch(deleteOrder(orderId));
+                    }
+                    setIsDeleteConfirmOpen(false);
+                    setSelectedOrder(null);
+                  }}
+                  className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl transition-all shadow-md shadow-red-600/10 cursor-pointer text-xs"
+                >
+                  Delete Order
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
       </div>
     </AdminLayout>

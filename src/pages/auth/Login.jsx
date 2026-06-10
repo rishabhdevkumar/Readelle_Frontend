@@ -139,45 +139,6 @@ export default function LoginPage() {
               </div>
             </div>
 
-            <div className="flex items-center justify-between">
-              <label className="flex items-center gap-2.5 cursor-pointer select-none">
-                <div className="relative">
-                  <input
-                    id="login-keep"
-                    type="checkbox"
-                    checked={keepLoggedIn}
-                    onChange={(e) => setKeepLoggedIn(e.target.checked)}
-                    className="sr-only peer"
-                  />
-
-                  <div className="w-4 h-4 rounded border border-gray-300 bg-white peer-checked:bg-teal-800 peer-checked:border-teal-800 transition-colors flex items-center justify-center">
-                    {keepLoggedIn && (
-                      <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-                        <path
-                          d="M1.5 5l2.5 2.5 4.5-4.5"
-                          stroke="white"
-                          strokeWidth="1.5"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                      </svg>
-                    )}
-                  </div>
-                </div>
-
-                <span className="text-sm text-gray-600">
-                  Keep me logged in
-                </span>
-              </label>
-
-              <Link
-                to="/forgot-password"
-                className="text-xs text-teal-700 hover:text-teal-900 font-medium transition-colors"
-              >
-                Forgot password?
-              </Link>
-            </div>
-
             <button
               id="login-submit"
               type="submit"

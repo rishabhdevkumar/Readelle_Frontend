@@ -229,17 +229,7 @@ const Header = ({ toggleSidebar }) => {
               )}
             </div>
 
-            {/* Settings Button */}
-            <button 
-              onClick={() => {
-                setIsSettingsOpen(true);
-                setIsNotificationsOpen(false);
-                setIsProfileOpen(false);
-              }}
-              className="bg-transparent border-none text-slate-500 hover:text-[#0a2f35] hover:bg-slate-100/50 cursor-pointer transition-all p-2 rounded-xl"
-            >
-              <Settings className="w-[18px] h-[18px]" />
-            </button>
+
 
           </div>
 

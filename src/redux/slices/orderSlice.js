@@ -84,6 +84,26 @@ export const cancelOrder = createAsyncThunk(
     }
 );
 
+export const deleteOrder = createAsyncThunk(
+    "/orders/deleteOrder",
+    async (orderId) => {
+        try {
+            const response = axiosInstance.delete(`/orders/${orderId}`);
+            toast.promise(response, {
+                loading: "Deleting order...",
+                success: "Order deleted successfully",
+                error: (err) => err?.response?.data?.message || "Failed to delete order",
+            });
+            const apiResponse = await response;
+            return { orderId, response: apiResponse };
+        } catch (error) {
+            console.log(error);
+            toast.error("Something went wrong");
+            throw error;
+        }
+    }
+);
+
 const orderSlice = createSlice({
     name: "order",
     initialState,
@@ -125,6 +145,13 @@ const orderSlice = createSlice({
                 if (cancelledOrder) {
                     state.ordersData = state.ordersData.map((order) =>
                         order._id === cancelledOrder._id ? cancelledOrder : order
+                    );
+                }
+            })
+            .addCase(deleteOrder.fulfilled, (state, action) => {
+                if (action.payload && action.payload.orderId) {
+                    state.ordersData = state.ordersData.filter(
+                        (order) => (order._id || order.id) !== action.payload.orderId
                     );
                 }
             });

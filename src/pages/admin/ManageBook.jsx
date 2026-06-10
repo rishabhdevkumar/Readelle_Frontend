@@ -3,11 +3,11 @@ import { useDispatch, useSelector } from 'react-redux';
 import { getAllBooks, createBook, updateBook, deleteBook } from '../../redux/slices/bookSlice';
 import { getAllCategories, createCategory, updateCategory, deleteCategory } from '../../redux/slices/categorySlice';
 import { getChaptersByBook, createChapter, updateChapter } from '../../redux/slices/chapterSlice';
+import axiosInstance from '../../helpers/axiosInstance';
 import { getAllUsers } from '../../redux/slices/authSlice';
 import toast from 'react-hot-toast';
 import AdminLayout from '../../layout/AdminLayout';
 import {
-  IndianRupee,
   Book,
   Users,
   BookOpen,
@@ -139,6 +139,7 @@ const ManageBooks = ({ activeNav, setActiveNav }) => {
   const usersData = useSelector((state) => state.auth.usersData) || [];
 
   const [selectedBookForChapters, setSelectedBookForChapters] = useState('');
+  const [totalChaptersCount, setTotalChaptersCount] = useState(0);
 
   const [modal, setModal] = useState(null);
 
@@ -180,6 +181,33 @@ const ManageBooks = ({ activeNav, setActiveNav }) => {
     dispatch(getAllCategories());
     dispatch(getAllUsers());
   }, [dispatch]);
+
+  // Fetch chapters for all books via direct API calls (avoids overwriting Redux chaptersData)
+  useEffect(() => {
+    if (reduxBooks.length === 0) return;
+    let cancelled = false;
+    const fetchAllChapterCounts = async () => {
+      try {
+        const results = await Promise.all(
+          reduxBooks.map((book) =>
+            axiosInstance.get(`/chapters/book/${book._id || book.id}`)
+              .then((res) => {
+                const chapters = res?.data?.data || res?.data || [];
+                return Array.isArray(chapters) ? chapters.length : 0;
+              })
+              .catch(() => 0)
+          )
+        );
+        if (!cancelled) {
+          setTotalChaptersCount(results.reduce((a, b) => a + b, 0));
+        }
+      } catch {
+        if (!cancelled) setTotalChaptersCount(0);
+      }
+    };
+    fetchAllChapterCounts();
+    return () => { cancelled = true; };
+  }, [reduxBooks.length]);
 
   // Listen to header global search
   const [searchTerm, setSearchTerm] = useState('');
@@ -234,8 +262,7 @@ const ManageBooks = ({ activeNav, setActiveNav }) => {
     });
   }, [books, searchTerm]);
 
-  const totalBookValue = reduxBooks.reduce((acc, curr) => acc + (Number(curr.price) || 0), 0);
-  const activeReadersCount = usersData.filter(u => u.status === 'Active').length;
+  const activeReadersCount = usersData.filter(u => (u.status || 'Active') === 'Active').length;
 
   const filteredBooksByCategory = chapterData.chapterSelectedCategory
     ? books.filter(b => b.category === chapterData.chapterSelectedCategory)
@@ -414,9 +441,9 @@ const ManageBooks = ({ activeNav, setActiveNav }) => {
         {/* ── KPI Cards ──────────────────────────────────────── */}
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5">
           {[
-            { label: 'Total Catalog Value', icon: IndianRupee, value: `₹${totalBookValue.toLocaleString()}`, sub: 'Dynamic asset value', subClass: 'text-emerald-600' },
             { label: 'Total Books', icon: Book, value: reduxBooks.length, sub: 'Dynamic catalog size', subClass: 'text-emerald-600' },
             { label: 'Total Categories', icon: Tag, value: reduxCategories.length, sub: 'Dynamic category count', subClass: 'text-emerald-600' },
+            { label: 'Total Chapters', icon: BookMarked, value: totalChaptersCount, sub: 'Dynamic chapter count', subClass: 'text-emerald-600' },
             { label: 'Active Readers', icon: Users, value: activeReadersCount, sub: 'Live members online', subClass: 'text-emerald-600' },
           ].map(({ label, icon: Icon, value, sub, subClass }) => (
             <div key={label} className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex flex-col justify-between h-[130px] hover:shadow-md transition-shadow">
