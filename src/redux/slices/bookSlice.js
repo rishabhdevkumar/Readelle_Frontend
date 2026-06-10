@@ -59,13 +59,14 @@ export const getAllBooks = createAsyncThunk(
     "/books/getAll",
     async () => {
         try {
-            const apiResponse = await axiosInstance.get("/books");
-            return apiResponse;
+            const apiResponse = await axiosInstance.get("/books/");
+            return apiResponse.data;
         } catch (error) {
             console.log(error);
         }
     }
 );
+
 
 export const updateBook = createAsyncThunk(
     "/books/updateBook",

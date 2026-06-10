@@ -1,7 +1,7 @@
 export default function Footer() {
   return (
-    <footer className="py-14 border-t border-slate-200">
-      <div className="max-w-350 mx-auto px-8 grid grid-cols-4 gap-10">
+    <footer className="py-8 border-t border-slate-200">
+      <div className="max-w-350 mx-auto px-8 grid grid-cols-4 gap-10 text-center text-sm">
         <div>
           <h3 className="font-bold text-xl text-[#002629]">
             ePustakalay
@@ -42,7 +42,7 @@ export default function Footer() {
         </div>
       </div>
 
-      <div className="max-w-350 mx-auto mt-12 pt-8 border-t text-center text-gray-500">
+      <div className="max-w-350 mx-auto mt-12 pt-8 border-t text-center text-gray-500 text-sm">
         © 2026 ePustakalay Digital Curator. All rights reserved.
       </div>
     </footer>
