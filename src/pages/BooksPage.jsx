@@ -2,7 +2,7 @@ import { useState } from "react";
 import React,{useEffect} from "react";
 import { useDispatch,useSelector } from "react-redux";
 import {getAllBooks} from "../redux/slices/bookSlice";
-
+import Navbar from "../components/Navbar";
 
 
 const colors = {
@@ -53,11 +53,11 @@ function BookCard({ book }) {
       onMouseLeave={() => setHovered(false)}
     >
       <div
-        className="relative overflow-hidden m-4 rounded-lg"
+        className="relative overflow-hidden m-2.5 rounded-lg"
         style={{ aspectRatio: "3/4", background: colors.surfaceContainerLow }}
       >
         <img
-          src={book.img}
+          src={book.cover_image}
           alt={book.title}
           className="w-full h-full object-cover transition-transform duration-500"
           style={{ transform: hovered ? "scale(1.05)" : "scale(1)" }}
@@ -71,7 +71,7 @@ function BookCard({ book }) {
           }}
         />
       </div>
-      <div className="px-5 pb-6 flex-1 flex flex-col">
+      <div className="px-4 pb-6 flex-1 flex flex-col">
         <span
           className="text-xs font-bold uppercase tracking-widest mb-1"
           style={{ color: `${colors.onSurfaceVariant}99`, fontSize: "10px", letterSpacing: "0.2em" }}
@@ -122,11 +122,12 @@ export default function EPustakalay() {
 const dispatch = useDispatch();
   
   const books = useSelector(
-      (state) => state.book?.booksData || []
+      (state) => state.books.booksData || []
   );
 
   // 4. Trigger the data fetch when the component mounts
   useEffect(() => {
+      console.log("Fetching books...");
       dispatch(getAllBooks());
   }, [dispatch]);
 
@@ -156,105 +157,11 @@ const dispatch = useDispatch();
         input[type=range]::-webkit-slider-thumb { cursor: pointer; }
       `}</style>
 
-      {/* Top Nav */}
-      <nav
-        className="sticky top-0 z-50 flex justify-between items-center px-8 py-4 w-full"
-        style={{
-          background: "rgba(255,255,255,0.82)",
-          backdropFilter: "blur(16px)",
-          WebkitBackdropFilter: "blur(16px)",
-          boxShadow: "0 8px 32px rgba(203,212,217,0.18)",
-        }}
-      >
-        <div className="flex items-center gap-12">
-          <span
-            className="text-2xl font-bold tracking-tight"
-            style={{ fontFamily: "Manrope, sans-serif", color: "#022c30" }}
-          >
-            ePustakalay
-          </span>
-          <div className="hidden md:flex gap-8 items-center">
-            {["Home", "Books", "Wishlist"].map((link) => (
-              <a
-                key={link}
-                href="#"
-                className="transition-colors text-sm font-medium"
-                style={{
-                  fontFamily: "Manrope, sans-serif",
-                  color:
-                    link === "Books"
-                      ? colors.primary
-                      : colors.onSurfaceVariant,
-                  borderBottom:
-                    link === "Books"
-                      ? `2px solid ${colors.primary}`
-                      : "2px solid transparent",
-                  paddingBottom: "2px",
-                  fontWeight: link === "Books" ? 700 : 500,
-                }}
-              >
-                {link}
-              </a>
-            ))}
-          </div>
-        </div>
-        <div className="flex items-center gap-6">
-          <div className="relative hidden lg:block">
-            <svg
-              className="absolute left-3 top-1/2 -translate-y-1/2"
-              width="18"
-              height="18"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke={colors.onSurfaceVariant}
-              strokeWidth="2"
-            >
-              <circle cx="11" cy="11" r="8" />
-              <path d="m21 21-4.35-4.35" />
-            </svg>
-            <input
-              type="text"
-              placeholder="Search curator archive..."
-              className="pl-10 pr-4 py-2 w-64 text-sm rounded-lg focus:outline-none focus:ring-2"
-              style={{
-                background: colors.surfaceContainerLow,
-                border: "none",
-                color: colors.onSurface,
-                focusRingColor: `${colors.primary}33`,
-              }}
-            />
-          </div>
-          <button
-            className="p-2 rounded-full transition-colors hover:bg-slate-100/60"
-            style={{ color: colors.onSurfaceVariant }}
-          >
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M7 18c-1.1 0-1.99.9-1.99 2S5.9 22 7 22s2-.9 2-2-.9-2-2-2zm10 0c-1.1 0-1.99.9-1.99 2s.89 2 1.99 2 2-.9 2-2-.9-2-2-2zm-2.2-5c.75 0 1.41-.41 1.75-1.03l3.58-6.49A1 1 0 0 0 19.24 4H5.21L4.27 2H1v2h2l3.6 7.59L5.24 14c-.16.28-.24.61-.24.96C5 16.1 5.9 17 7 17h12v-2H7.42c-.13 0-.25-.11-.25-.25l.03-.12L8.1 13h6.7z"/>
-            </svg>
-          </button>
-          <div
-            className="flex items-center gap-3 pl-4"
-            style={{ borderLeft: `1px solid ${colors.outlineVariant}33` }}
-          >
-            <img
-              src="https://lh3.googleusercontent.com/aida-public/AB6AXuBVGb_nL5yaeG88Z-GNPLEt0ovVSs-d39S_BusF7eQpNJBapcoLnuZ-DMVMxo2jZbEjCL2cF_DrsNta0ZMHlZxH3Pk7Lgrb1RN4EEsLYK8aTpzcpNXs1pMevqQZZ1Z6DnKBIMA8xx2TFNFmjYRhj4IS50G26ozlz1-oTwn6ZvgNYpfTor4rrXEe65ckpsAW6L-C474uNbqM2P7Snn2mEmmKlHPgk0EoZk56_qqGznfyKXAJNCyX1rLzo7B4w_3PiEH2l-sEX8gtyg"
-              alt="Profile"
-              className="w-8 h-8 rounded-full object-cover"
-            />
-            <span
-              className="hidden sm:block text-sm font-semibold"
-              style={{ fontFamily: "Manrope, sans-serif", color: colors.onSurface }}
-            >
-              Profile
-            </span>
-          </div>
-        </div>
-      </nav>
-
-      <div className="flex">
+       
+      <div className="flex min-h-screen">
         {/* Sidebar */}
         <aside
-          className="hidden md:flex flex-col fixed left-0 top-0 pt-24 w-72 h-screen z-40 p-6 gap-4"
+          className="hidden md:block flex-col sticky left-0 top-0 pt-24 w-56 h-screen z-40 p-6 gap-4"
           style={{ background: colors.surfaceContainerLow }}
         >
           <div className="mb-2">
@@ -304,7 +211,7 @@ const dispatch = useDispatch();
                       }}
                     >
                       <div
-                        className="w-4 h-4 rounded flex items-center justify-center flex-shrink-0"
+                        className="w-4 h-4 rounded flex items-center justify-center shrink-0"
                         style={{
                           background: isChecked ? colors.primary : "transparent",
                           border: isChecked
@@ -416,12 +323,12 @@ const dispatch = useDispatch();
         </aside>
 
         {/* Main */}
-        <main className="flex-1 md:ml-72 p-8 pt-6">
+        <main className="flex-1 p-8 pt-22">
           {/* Header */}
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
             <div className="max-w-xl">
               <h1
-                className="text-4xl font-extrabold tracking-tight leading-tight"
+                className="text-2xl font-extrabold tracking-tight leading-tight"
                 style={{ fontFamily: "Manrope, sans-serif", color: colors.primary }}
               >
                 Curated Archive
@@ -460,13 +367,13 @@ const dispatch = useDispatch();
           </div>
 
           {/* Books Grid */}
-           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 max-w-5xl mx-auto ">
             {books.map((book) => (
               <BookCard key={book._id} book={book} />
             ))}
           </div> 
 
-            console.log(books);
+            
           {/* Load More */}
           <div className="mt-16 flex justify-center">
             <button
@@ -492,40 +399,7 @@ const dispatch = useDispatch();
         </main>
       </div>
 
-      {/* Footer */}
-      <footer
-        className="w-full py-12 px-8 flex flex-col md:flex-row justify-between items-center gap-6 mt-20"
-        style={{ background: "#f8fafb" }}
-      >
-        <div className="flex flex-col gap-2">
-          <span
-            className="text-lg font-black"
-            style={{ fontFamily: "Manrope, sans-serif", color: "#022c30" }}
-          >
-            ePustakalay
-          </span>
-          <p
-            className="text-xs uppercase tracking-widest"
-            style={{ color: colors.onSurfaceVariant }}
-          >
-            © 2024 ePustakalay Digital Curator
-          </p>
-        </div>
-        <div className="flex flex-wrap justify-center gap-8">
-          {["Library Archive", "Collections", "Reader Support", "Privacy Policy"].map(
-            (link) => (
-              <a
-                key={link}
-                href="#"
-                className="text-xs uppercase tracking-widest underline underline-offset-4 transition-opacity opacity-70 hover:opacity-100"
-                style={{ color: colors.onSurfaceVariant }}
-              >
-                {link}
-              </a>
-            )
-          )}
-        </div>
-      </footer>
+     
     </div>
   );
 }

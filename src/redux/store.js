@@ -9,7 +9,7 @@ export const store = configureStore({
     reducer: {
         auth: AuthSliceReducer,
         category: CategorySliceReducer,
-        book: BookSliceReducer,
+        books: BookSliceReducer,
         chapter: ChapterSliceReducer,
         order: OrderSliceReducer,
     },
