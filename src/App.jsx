@@ -1,5 +1,7 @@
 import { Routes, Route } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
+import { useEffect } from "react";
+import { useDispatch } from "react-redux";
 
 import HomePage from "./pages/HomePage";
 import LoginPage from "./pages/auth/Login";
@@ -12,8 +14,23 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import Layout from "./layout/Layout";
 import PublicLayout from "./layout/publicLayout";
 import BooksPage from "./pages/BooksPage";
+import WishlistPage from "./pages/WishlistPage";
+import { getMe, setAuthCheckComplete } from "./redux/slices/authSlice";
 
 function App() {
+  const dispatch = useDispatch();
+
+  // Restore auth state on app mount if token exists
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      dispatch(getMe());
+    } else {
+      // No token, mark auth check as complete
+      dispatch(setAuthCheckComplete());
+    }
+  }, [dispatch]);
+
   return (
     <>
       <Routes>
@@ -51,6 +68,17 @@ function App() {
           element={
             <ProtectedRoute allowedRoles={["admin"]}>
               <Orders />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route 
+          path="/wishlist"
+          element={
+            <ProtectedRoute allowedRoles={["user", "admin"]}>
+              <PublicLayout>
+                <WishlistPage />
+              </PublicLayout>
             </ProtectedRoute>
           }
         />

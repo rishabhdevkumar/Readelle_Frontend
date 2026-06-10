@@ -4,6 +4,7 @@ import CategorySliceReducer from "./slices/categorySlice";
 import BookSliceReducer from "./slices/bookSlice";
 import ChapterSliceReducer from "./slices/chapterSlice";
 import OrderSliceReducer from "./slices/orderSlice";
+import WishlistSliceReducer from "./slices/wishlistSlice";
 
 export const store = configureStore({
     reducer: {
@@ -12,6 +13,7 @@ export const store = configureStore({
         books: BookSliceReducer,
         chapter: ChapterSliceReducer,
         order: OrderSliceReducer,
+        wishlist: WishlistSliceReducer,
     },
     devTools: true,
     middleware: (getDefaultMiddleware) =>

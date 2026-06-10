@@ -9,12 +9,28 @@ import { Navigate } from "react-router-dom";
  *  - children: ReactNode     — the page to render if authorized
  *
  * Behavior:
+ *  - Checking auth → show loading
  *  - Not logged in  → redirect to /login
  *  - Wrong role     → redirect to /unauthorized  (or "/" as fallback)
  *  - Correct role   → render children
  */
 export default function ProtectedRoute({ allowedRoles = [], children }) {
-  const { isLoggedIn, role } = useSelector((state) => state.auth);
+  const { isLoggedIn, role, isCheckingAuth } = useSelector((state) => state.auth);
+
+  // Wait for initial auth check to complete
+  if (isCheckingAuth) {
+    return (
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'center', 
+        alignItems: 'center', 
+        height: '100vh',
+        fontSize: '1.2rem'
+      }}>
+        Loading...
+      </div>
+    );
+  }
 
   if (!isLoggedIn) {
     return <Navigate to="/login" replace />;

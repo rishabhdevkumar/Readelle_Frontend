@@ -7,6 +7,7 @@ const initialState = {
     role: "",
     data: {},
     usersData: [],
+    isCheckingAuth: true, // Add loading state for initial auth check
 };
 
 export const registerUser = createAsyncThunk(
@@ -140,8 +141,12 @@ const authSlice = createSlice({
             state.role = "";
             state.data = {};
             state.usersData = [];
+            state.isCheckingAuth = false;
 
             localStorage.removeItem("token");
+        },
+        setAuthCheckComplete: (state) => {
+            state.isCheckingAuth = false;
         },
     },
     extraReducers: (builder) => {
@@ -175,6 +180,7 @@ const authSlice = createSlice({
                 state.isLoggedIn = true;
                 state.role = userData?.role || "";
                 state.data = userData || {};
+                state.isCheckingAuth = false;
             })
 
             .addCase(getMe.fulfilled, (state, action) => {
@@ -185,6 +191,14 @@ const authSlice = createSlice({
                 state.isLoggedIn = true;
                 state.role = userData?.role || "";
                 state.data = userData || {};
+                state.isCheckingAuth = false;
+            })
+
+            .addCase(getMe.rejected, (state) => {
+                state.isLoggedIn = false;
+                state.role = "";
+                state.data = {};
+                state.isCheckingAuth = false;
             })
 
             .addCase(getAllUsers.fulfilled, (state, action) => {
@@ -211,6 +225,6 @@ const authSlice = createSlice({
     },
 });
 
-export const { logout } = authSlice.actions;
+export const { logout, setAuthCheckComplete } = authSlice.actions;
 
 export default authSlice.reducer;
