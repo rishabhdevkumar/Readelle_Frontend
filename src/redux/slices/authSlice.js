@@ -33,25 +33,21 @@ export const registerUser = createAsyncThunk(
     }
 );
 
+
 export const loginUser = createAsyncThunk(
-    "/auth/login",
+    "auth/login", // Kuch projects mein slash se shuru karne par issues aate hain, use "auth/login"
     async (loginData, thunkAPI) => {
         try {
-            const response = axiosInstance.post("/users/login", loginData);
-
-            toast.promise(response, {
-                loading: "Logging in...",
-                success: (resolvedPromise) =>
-                    resolvedPromise?.data?.message ||
-                    "Login successful",
-                error: (err) => err?.response?.data?.message || "Login failed",
-            });
-
-            const apiResponse = await response;
-            return apiResponse;
+            // Hum yahan direct 'await' use karenge aur toast.promise hata denge
+            const response = await axiosInstance.post("/users/login", loginData);
+            
+            // Hamesha response ka direct data return karein taaki payload structure predictable rahe
+            return response.data; 
         } catch (error) {
-            console.log(error);
-            return thunkAPI.rejectWithValue(error?.response?.data || error.message);
+            console.error(error);
+            // Agar backend custom message bhej raha hai to use pass karein
+            const errorMessage = error?.response?.data?.message || error?.response?.data || error.message;
+            return thunkAPI.rejectWithValue(errorMessage);
         }
     }
 );
