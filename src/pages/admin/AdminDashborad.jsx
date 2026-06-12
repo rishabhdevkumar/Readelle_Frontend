@@ -72,6 +72,23 @@ const getCustomerEmail = (o) =>
   o?.email ||
   '';
 
+const formatShippingAddress = (address) => {
+  if (!address) return '';
+  if (typeof address === 'string') return address;
+  if (typeof address === 'object') {
+    const { fullName, phone, address: streetAddress, city, state, pincode } = address;
+    const parts = [
+      fullName,
+      streetAddress,
+      city,
+      state,
+      pincode ? String(pincode) : ''
+    ].filter(Boolean);
+    return parts.join(', ') + (phone ? ` (Phone: ${phone})` : '');
+  }
+  return String(address);
+};
+
 const getStatusBadgeClass = (status) => {
   const norm = String(status || "").toUpperCase();
   switch (norm) {
@@ -170,7 +187,7 @@ const AdminDashboard = ({ activeNav, setActiveNav }) => {
   const navigate = useNavigate();
 
   const booksData = useSelector((state) => state.books.booksData) || [];
-  const categoriesData = useSelector((state) => state.category.categoriesData) || [];
+  const categoriesData = useSelector((state) => state.categories.categoriesData) || [];
   const usersData = useSelector((state) => state.auth.usersData) || [];
   const ordersData = useSelector((state) => state.order.ordersData) || [];
 
@@ -236,12 +253,14 @@ const AdminDashboard = ({ activeNav, setActiveNav }) => {
     const sorted = [...ordersData].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
     return sorted.filter(o => {
       const orderId = o.orderId || o._id || "";
-      const customerName = o.user?.name || o.name || "";
+      const customerName = getCustomerName(o);
+      const customerEmail = getCustomerEmail(o);
       const status = o.status || "";
 
       return (
         orderId.toLowerCase().includes(searchVal.toLowerCase()) ||
         customerName.toLowerCase().includes(searchVal.toLowerCase()) ||
+        customerEmail.toLowerCase().includes(searchVal.toLowerCase()) ||
         status.toLowerCase().includes(searchVal.toLowerCase())
       );
     }).slice(0, 5);
@@ -577,7 +596,7 @@ const AdminDashboard = ({ activeNav, setActiveNav }) => {
                     {selectedOrder.shippingAddress && (
                       <div className="flex flex-col gap-0.5 col-span-2">
                         <span className="text-slate-400 font-semibold">Shipping Address</span>
-                        <span className="font-bold text-slate-700 leading-relaxed">{selectedOrder.shippingAddress}</span>
+                        <span className="font-bold text-slate-700 leading-relaxed">{formatShippingAddress(selectedOrder.shippingAddress)}</span>
                       </div>
                     )}
                   </div>

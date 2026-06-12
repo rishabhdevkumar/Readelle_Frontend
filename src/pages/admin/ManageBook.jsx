@@ -134,7 +134,7 @@ const ManageBooks = ({ activeNav, setActiveNav }) => {
   const dispatch = useDispatch();
   const reduxBooks = useSelector((state) => state.books.booksData) || [];
 
-  const reduxCategories = useSelector((state) => state.category.categoriesData) || [];
+  const reduxCategories = useSelector((state) => state.categories.categoriesData) || [];
   const reduxChapters = useSelector((state) => state.chapter.chaptersData) || [];
   const usersData = useSelector((state) => state.auth.usersData) || [];
 
@@ -482,7 +482,6 @@ const ManageBooks = ({ activeNav, setActiveNav }) => {
                   <th className="px-6 py-4">Book Title</th>
                   <th className="px-6 py-4">Price</th>
                   <th className="px-6 py-4">Category</th>
-                  <th className="px-6 py-4">Stock Status</th>
                   <th className="px-6 py-4 text-center">Actions</th>
                 </tr>
               </thead>
@@ -512,12 +511,6 @@ const ManageBooks = ({ activeNav, setActiveNav }) => {
                       <span className={`px-2.5 py-1 text-[10px] font-bold uppercase rounded-full tracking-wide ${book.categoryClass}`}>
                         {book.categoryName}
                       </span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-2">
-                        <span className={`w-2.5 h-2.5 rounded-full shadow-sm ${book.stockDotClass}`} />
-                        <span className="text-slate-700 font-semibold">{book.stock}</span>
-                      </div>
                     </td>
                     <td className="px-6 py-4 text-center">
                       <div className="flex items-center justify-center gap-3">
