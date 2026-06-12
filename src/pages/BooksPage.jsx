@@ -2,7 +2,6 @@ import { useState } from "react";
 import React,{useEffect} from "react";
 import { useDispatch,useSelector } from "react-redux";
 import { getAllBooks } from "../redux/slices/bookSlice";
-import Navbar from "../components/Navbar";
 import { getAllCategories } from "../redux/slices/categorySlice";
 
 const colors = {
@@ -453,3 +452,4 @@ switch (sortBy) {
     </div>
   );
 }
+   
