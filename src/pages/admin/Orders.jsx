@@ -72,6 +72,23 @@ const getCustomerEmail = (o) =>
   o?.email ||
   '';
 
+const formatShippingAddress = (address) => {
+  if (!address) return '';
+  if (typeof address === 'string') return address;
+  if (typeof address === 'object') {
+    const { fullName, phone, address: streetAddress, city, state, pincode } = address;
+    const parts = [
+      fullName,
+      streetAddress,
+      city,
+      state,
+      pincode ? String(pincode) : ''
+    ].filter(Boolean);
+    return parts.join(', ') + (phone ? ` (Phone: ${phone})` : '');
+  }
+  return String(address);
+};
+
 const Orders = ({ activeNav, setActiveNav }) => {
   const dispatch = useDispatch();
   const { ordersData = [], loading } = useSelector((state) => state.order);
@@ -316,7 +333,6 @@ const Orders = ({ activeNav, setActiveNav }) => {
                   <th className="px-6 py-4">Customer Name</th>
                   <th className="px-6 py-4">Date</th>
                   <th className="px-6 py-4">Total Amount</th>
-                  <th className="px-6 py-4">Payment Method</th>
                   <th className="px-6 py-4">Status</th>
                   <th className="px-6 py-4 text-center">Actions</th>
                 </tr>
@@ -357,12 +373,6 @@ const Orders = ({ activeNav, setActiveNav }) => {
                       </td>
                       <td className="px-6 py-4 font-bold text-slate-700">
                         ₹{order.totalAmount || order.amount || '0'}
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-1.5 font-semibold text-slate-500">
-                          {getMethodIcon(order.paymentMethod || order.method)}
-                          <span>{order.paymentMethod || order.method || 'UPI'}</span>
-                        </div>
                       </td>
                       <td className="px-6 py-4">
                         <span className={getStatusBadgeClass(order.status)}>
@@ -673,7 +683,7 @@ const Orders = ({ activeNav, setActiveNav }) => {
                     {selectedOrder.shippingAddress && (
                       <div className="flex flex-col gap-0.5 col-span-2">
                         <span className="text-slate-400 font-semibold">Shipping Address</span>
-                        <span className="font-bold text-slate-700 leading-relaxed">{selectedOrder.shippingAddress}</span>
+                        <span className="font-bold text-slate-700 leading-relaxed">{formatShippingAddress(selectedOrder.shippingAddress)}</span>
                       </div>
                     )}
                   </div>
