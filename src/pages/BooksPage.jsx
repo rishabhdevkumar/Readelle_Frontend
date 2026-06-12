@@ -141,8 +141,9 @@ const dispatch = useDispatch();
 
   const [checkedCategories, setCheckedCategories] = useState([]);
   const [activeLanguage, setActiveLanguage] = useState("");
-  const [priceRange, setPriceRange] = useState(maxPrice);
+  const [priceRange, setPriceRange] = useState(5000);
   const [sortBy, setSortBy] = useState("Popularity");
+  const [searchTerm, setSearchTerm] = useState("");
 
   const toggleCategory = (cat) => {
     setCheckedCategories((prev) =>
@@ -187,8 +188,6 @@ switch (sortBy) {
     break;
 }
   
-
-
   return (
     <div
       className="min-h-screen"
@@ -294,7 +293,7 @@ switch (sortBy) {
                 <input
                   type="range"
                   min={0}
-                  max={maxPrice}
+                  max={5000}
                   value={priceRange}
                   onChange={(e) => setPriceRange(Number(e.target.value))}
                   className="w-full h-1 rounded-lg appearance-none cursor-pointer"
@@ -362,9 +361,10 @@ switch (sortBy) {
               (e.currentTarget.style.background = colors.surfaceContainerHigh)
             }
             onClick={() => {
-              setCheckedCategories(["Non-Fiction"]);
-              setActiveLanguage("English");
-              setPriceRange(maxPrice);
+              setCheckedCategories([]);
+              setActiveLanguage("");
+              setPriceRange(5000);
+              
             }}
           >
             Reset All
@@ -421,6 +421,7 @@ switch (sortBy) {
               <BookCard key={book._id} book={book} />
             ))}
           </div> 
+
 
             
           {/* Load More */}
