@@ -1,9 +1,8 @@
 import { useState } from "react";
 import React,{useEffect} from "react";
 import { useDispatch,useSelector } from "react-redux";
-import {getAllBooks} from "../redux/slices/bookSlice";
-import Navbar from "../components/Navbar";
-
+import { getAllBooks } from "../redux/slices/bookSlice";
+import { getAllCategories } from "../redux/slices/categorySlice";
 
 const colors = {
   primary: "#002629",
@@ -25,8 +24,7 @@ const colors = {
 };
 
 
-const categories = ["Fiction", "Academic", "Programming", "History"];
-const languages = ["English", "Hindi", "Spanish"];
+const languages = ["All","English", "Hindi"];
 
 function BookCard({ book }) {
   const [hovered, setHovered] = useState(false);
@@ -53,7 +51,7 @@ function BookCard({ book }) {
       onMouseLeave={() => setHovered(false)}
     >
       <div
-        className="relative overflow-hidden m-2.5 rounded-lg"
+        className="relative overflow-hidden rounded-lg"
         style={{ aspectRatio: "3/4", background: colors.surfaceContainerLow }}
       >
         <img
@@ -124,16 +122,26 @@ const dispatch = useDispatch();
   const books = useSelector(
       (state) => state.books.booksData || []
   );
+  
+  const categories = useSelector(
+    (state) => state.categories.categoriesData || []
+  );
 
-  // 4. Trigger the data fetch when the component mounts
+  
   useEffect(() => {
-      console.log("Fetching books...");
       dispatch(getAllBooks());
+      dispatch(getAllCategories());
   }, [dispatch]);
 
-  const [checkedCategories, setCheckedCategories] = useState(["Fiction"]);
-  const [activeLanguage, setActiveLanguage] = useState("English");
-  const [priceRange, setPriceRange] = useState(500);
+
+  const maxPrice =
+  books.length > 0
+    ? Math.max(...books.map(book => book.price))
+    : 10000;
+
+  const [checkedCategories, setCheckedCategories] = useState([]);
+  const [activeLanguage, setActiveLanguage] = useState("");
+  const [priceRange, setPriceRange] = useState(maxPrice);
   const [sortBy, setSortBy] = useState("Popularity");
 
   const toggleCategory = (cat) => {
@@ -141,6 +149,45 @@ const dispatch = useDispatch();
       prev.includes(cat) ? prev.filter((c) => c !== cat) : [...prev, cat]
     );
   };
+
+  const filteredBooks = books.filter((book) => {
+    const categoryMatch =
+      checkedCategories.length === 0 ||
+      checkedCategories.includes(book.category);
+
+    
+  const languageMatch =
+    activeLanguage === "" ||
+    book.language === activeLanguage;
+
+   const priceMatch = book.price <= priceRange;
+
+  return categoryMatch && languageMatch && priceMatch ;
+});
+
+
+const sortedBooks = [...filteredBooks];
+
+switch (sortBy) {
+  case "Price: Low to High":
+    sortedBooks.sort((a, b) => a.price - b.price);
+    break;
+
+  case "Price: High to Low":
+    sortedBooks.sort((a, b) => b.price - a.price);
+    break;
+
+  case "Newest Arrivals":
+    sortedBooks.sort(
+      (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+    );
+    break;
+
+  default:
+    break;
+}
+  
+
 
   return (
     <div
@@ -193,11 +240,11 @@ const dispatch = useDispatch();
               </div>
               <div className="flex flex-col gap-2">
                 {categories.map((cat) => {
-                  const isChecked = checkedCategories.includes(cat);
+                  const isChecked = checkedCategories.includes(cat._id);
                   return (
                     <label
-                      key={cat}
-                      onClick={() => toggleCategory(cat)}
+                      key={cat._id}
+                      onClick={() => toggleCategory(cat._id)}
                       className="flex items-center gap-3 p-2 rounded-lg cursor-pointer transition-all duration-150 hover:translate-x-1"
                       style={{
                         background: isChecked
@@ -225,7 +272,7 @@ const dispatch = useDispatch();
                           </svg>
                         )}
                       </div>
-                      <span className="text-sm">{cat}</span>
+                      <span className="text-sm">{cat.category_name}</span>
                     </label>
                   );
                 })}
@@ -247,7 +294,7 @@ const dispatch = useDispatch();
                 <input
                   type="range"
                   min={0}
-                  max={500}
+                  max={maxPrice}
                   value={priceRange}
                   onChange={(e) => setPriceRange(Number(e.target.value))}
                   className="w-full h-1 rounded-lg appearance-none cursor-pointer"
@@ -257,9 +304,9 @@ const dispatch = useDispatch();
                   className="flex justify-between mt-2 text-xs font-medium"
                   style={{ color: colors.onSurfaceVariant }}
                 >
-                  <span>$0</span>
+                  <span>₹0</span>
                   <span className="font-bold" style={{ color: colors.primary }}>
-                    ${priceRange}
+                    ₹{priceRange}
                   </span>
                 </div>
               </div>
@@ -280,14 +327,16 @@ const dispatch = useDispatch();
                 {languages.map((lang) => (
                   <button
                     key={lang}
-                    onClick={() => setActiveLanguage(lang)}
+                    onClick={() => setActiveLanguage(lang==="All" ? "":lang)}
                     className="px-3 py-1 rounded-full text-xs font-semibold transition-colors duration-150"
                     style={{
                       background:
+                      (lang === "All" && activeLanguage === "")||
                         activeLanguage === lang
                           ? colors.primary
                           : colors.surfaceContainerHigh,
                       color:
+                        (lang === "All" && activeLanguage === "") ||
                         activeLanguage === lang
                           ? colors.onPrimary
                           : colors.onSurface,
@@ -313,9 +362,9 @@ const dispatch = useDispatch();
               (e.currentTarget.style.background = colors.surfaceContainerHigh)
             }
             onClick={() => {
-              setCheckedCategories(["Fiction"]);
+              setCheckedCategories(["Non-Fiction"]);
               setActiveLanguage("English");
-              setPriceRange(500);
+              setPriceRange(maxPrice);
             }}
           >
             Reset All
@@ -357,18 +406,18 @@ const dispatch = useDispatch();
                   className="bg-transparent border-none text-sm font-semibold focus:outline-none cursor-pointer"
                   style={{ color: colors.primary }}
                 >
-                  <option>Popularity</option>
-                  <option>Newest Arrivals</option>
-                  <option>Price: Low to High</option>
-                  <option>Price: High to Low</option>
+                  <option value="Popularity" >Popularity</option>
+                  <option value="Newest Arrivals" >Newest Arrivals</option>
+                  <option value="Price: Low to High" >Price: Low to High</option>
+                  <option value="Price: High to Low" >Price: High to Low</option>
                 </select>
               </div>
             </div>
           </div>
 
           {/* Books Grid */}
-           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 max-w-5xl mx-auto ">
-            {books.map((book) => (
+           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 max-w-9xl mx-auto ">
+            {sortedBooks.map((book) => (
               <BookCard key={book._id} book={book} />
             ))}
           </div> 
@@ -403,3 +452,4 @@ const dispatch = useDispatch();
     </div>
   );
 }
+   

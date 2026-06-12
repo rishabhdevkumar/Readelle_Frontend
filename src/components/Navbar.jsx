@@ -1,8 +1,28 @@
 import { Search, ShoppingCart, User } from "lucide-react";
-import { Link } from "react-router-dom";
+import { useSelector,useDispatch } from "react-redux";
+import { NavLink } from "react-router-dom";
+import { logout } from "../redux/slices/authSlice";
 
 
 export default function Navbar() {
+
+  const dispatch = useDispatch();
+
+  const {isLoggedIn,data}=useSelector(
+    (state)=>state.auth
+  );
+
+  const handleLogout=()=>{
+    dispatch(logout());
+  };
+
+  const linkStyles = ({ isActive }) => 
+    `transition-all duration-200 relative pb-1 ${
+      isActive 
+        ? "text-[#002629] after:w-full"
+        : "text-slate-500 hover:text-[#002629] after:w-0"
+    } after:content-[""] after:absolute after:bottom-0 after:left-0 after:h-[2px] after:bg-[#002629] after:transition-all after:duration-200`;
+
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-slate-50/80 backdrop-blur-md shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
       <nav className="flex justify-between items-center px-8 py-4 max-w-350 mx-auto h-16">
@@ -13,22 +33,20 @@ export default function Navbar() {
 
           <div className="hidden md:flex gap-8 items-center text-base">
             
-            <Link to="/" className="font-bold">
+          <NavLink to="/" className={linkStyles}>
                Home
-            </Link>
-            <Link to="/books" className="font-bold">
+            </NavLink>
+            <NavLink to="/books" className={linkStyles}>
               Books
-            </Link>
-            <Link to="" className="font-bold">
+            </NavLink>
+            <NavLink to="/wishlist" className={linkStyles}> {/* Added proper /wishlist path */}
               Wishlist
-            </Link>
-            {/* <a href="/books" className="text-gray-500">Books</a> */}
-            {/* <a className="text-gray-500">Wishlist</a> */}
+            </NavLink>
 
           </div>
         </div>
 
-        <div className="flex items-center gap-6">
+        <div className="flex items-center gap-6 py-5">
           <div className="hidden lg:flex items-center bg-slate-200/50 rounded-lg px-3 py-2 w-64">
             <Search size={16} className="text-gray-400" />
             <input
@@ -36,10 +54,40 @@ export default function Navbar() {
               placeholder="Search the collection..."
               className="bg-transparent outline-none ml-2 text-sm w-full"
             />
+
           </div>
 
           <ShoppingCart size={18} />
-          <User size={18} />
+          {/* <User size={18} /> */}
+
+          {isLoggedIn ? (
+            <div className="flex items-center gap-3">
+              
+              <button  
+              onClick={handleLogout}
+              className="px-4 py-2 bg-[#002629] text-white rounded-md"
+              >
+                Logout
+              </button>
+            </div>
+          ):(
+            <div className="flex gap-3">
+              <NavLink to="/login" 
+               className="px-4 py-2 border rounded-md"
+              >Login
+              
+              </NavLink>
+
+              <NavLink
+              to="/signup"
+              className="px-4 py-2 bg-[#002629] text-white rounded-md"
+              >
+                Sign Up
+              </NavLink>
+
+            </div>
+          )}
+
         </div>
       </nav>
     </header>

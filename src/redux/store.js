@@ -9,7 +9,7 @@ import WishlistSliceReducer from "./slices/wishlistSlice";
 export const store = configureStore({
     reducer: {
         auth: AuthSliceReducer,
-        category: CategorySliceReducer,
+        categories: CategorySliceReducer,
         books: BookSliceReducer,
         chapter: ChapterSliceReducer,
         order: OrderSliceReducer,
