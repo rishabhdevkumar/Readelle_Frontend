@@ -151,8 +151,9 @@ const navigate = useNavigate();
     initialCategory ? [initialCategory] : []
   );
   const [activeLanguage, setActiveLanguage] = useState("");
-  const [priceRange, setPriceRange] = useState(maxPrice);
+  const [priceRange, setPriceRange] = useState(5000);
   const [sortBy, setSortBy] = useState("Popularity");
+  const [searchTerm, setSearchTerm] = useState("");
 
   // Sync category filter whenever URL search params change
   useEffect(() => {
@@ -244,8 +245,6 @@ switch (sortBy) {
     break;
 }
   
-
-
   return (
     <div
       className="min-h-screen"
@@ -351,7 +350,7 @@ switch (sortBy) {
                 <input
                   type="range"
                   min={0}
-                  max={maxPrice}
+                  max={5000}
                   value={priceRange}
                   onChange={(e) => setPriceRange(Number(e.target.value))}
                   className="w-full h-1 rounded-lg appearance-none cursor-pointer"
@@ -479,6 +478,7 @@ switch (sortBy) {
               <BookCard key={book._id} book={book} />
             ))}
           </div> 
+
 
             
           {/* Load More */}
