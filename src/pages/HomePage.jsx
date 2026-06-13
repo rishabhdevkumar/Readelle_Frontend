@@ -219,7 +219,10 @@ export default function HomePage() {
   const handleNewsletterSubmit = (e) => {
     e.preventDefault();
     if (newsletterEmail.trim()) {
-      toast.success("Thank you for subscribing to ePustakalay curation digest!");
+      toast.success(`You've successfully subscribed with ${newsletterEmail}`, {
+        duration: 4000,
+        position: "top-center",
+      });
       setNewsletterEmail("");
     } else {
       toast.error("Please enter a valid email address.");
