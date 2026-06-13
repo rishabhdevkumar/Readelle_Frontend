@@ -5,6 +5,7 @@ import { useDispatch } from "react-redux";
 import { Mail, Lock, Eye, EyeOff, User, Phone } from "lucide-react";
 import { registerUser } from "../../redux/slices/authSlice";
 import libraryBg from "../../assets/library.png";
+import logo from "../../assets/ePustakalayNewLogo.png";
 import toast from "react-hot-toast";
 
 export default function SignupPage() {
@@ -136,9 +137,11 @@ export default function SignupPage() {
             <div className="absolute inset-0 bg-black/45 backdrop-blur-[2px]" />
 
             <div className="relative h-full flex items-center justify-center gap-2">
-              <span className="text-white text-xl font-bold">
-                ePustakalay
-              </span>
+              <img 
+                src={logo} 
+                alt="ePustakalay Logo" 
+                className="h-16 w-auto object-contain"
+              />
             </div>
           </div>
 

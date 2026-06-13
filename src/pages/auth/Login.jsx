@@ -5,6 +5,7 @@ import { useDispatch } from "react-redux";
 import { loginUser, logout } from "../../redux/slices/authSlice";
 import { Eye, EyeOff } from "lucide-react";
 import toast from "react-hot-toast";
+import logo from "../../assets/ePustakalayNewLogo.png";
 
 const ROLE_ROUTES = {
   admin: "/admin",
@@ -111,13 +112,11 @@ export default function LoginPage() {
       <div className="relative z-10 flex flex-col items-center w-full px-4">
         {/* Core Header Section */}
         <div className="flex flex-col items-center mb-6">
-          <div className="w-12 h-12 rounded-2xl bg-teal-900 flex items-center justify-center shadow-lg mb-2">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
-              <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
-            </svg>
-          </div>
-          <span className="text-teal-900 font-semibold text-lg tracking-wide">ePustakalay</span>
+          <img 
+            src={logo} 
+            alt="ePustakalay Logo" 
+            className="h-20 w-auto object-contain mb-2"
+          />
         </div>
 
         {/* Card Component Form Container */}
