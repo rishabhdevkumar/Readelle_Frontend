@@ -3,6 +3,7 @@ import { Search, ShoppingCart, User } from "lucide-react";
 import { useSelector, useDispatch } from "react-redux";
 import { NavLink, useNavigate, useLocation } from "react-router-dom";
 import { logout } from "../redux/slices/authSlice";
+import logo from "../assets/ePustakalayNewLogo.png";
 
 
 export default function Navbar() {
@@ -51,9 +52,13 @@ export default function Navbar() {
     <header className="fixed top-0 left-0 right-0 z-50 bg-slate-50/80 backdrop-blur-md shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
       <nav className="flex justify-between items-center px-8 py-4 max-w-350 mx-auto h-16">
         <div className="flex items-center gap-12">
-          <h1 className="text-2xl font-extrabold tracking-tight text-[#002629]">
-            ePustakalay
-          </h1>
+          <NavLink to="/" className="flex items-center">
+            <img 
+              src={logo} 
+              alt="ePustakalay Logo" 
+              className="h-12 w-auto object-contain"
+            />
+          </NavLink>
 
           <div className="hidden md:flex gap-8 items-center text-base">
             

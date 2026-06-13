@@ -1,11 +1,15 @@
+import logo from "../assets/ePustakalayNewLogo.png";
+
 export default function Footer() {
   return (
     <footer className="py-8 border-t border-slate-200">
       <div className="max-w-350 mx-auto px-8 grid grid-cols-4 gap-10 text-center text-sm">
         <div>
-          <h3 className="font-bold text-xl text-[#002629]">
-            ePustakalay
-          </h3>
+          <img 
+            src={logo} 
+            alt="ePustakalay Logo" 
+            className="h-16 w-auto object-contain mx-auto mb-4"
+          />
 
           <p className="text-gray-500 mt-5">
             Empowering intellectual exploration through the
