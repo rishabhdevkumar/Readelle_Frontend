@@ -15,6 +15,7 @@ import Layout from "./layout/Layout";
 import PublicLayout from "./layout/publicLayout";
 import BooksPage from "./pages/BooksPage";
 import WishlistPage from "./pages/WishlistPage";
+import MyAccount from "./pages/MyAccount";
 import { getMe, setAuthCheckComplete } from "./redux/slices/authSlice";
 
 function App() {
@@ -78,6 +79,17 @@ function App() {
             <ProtectedRoute allowedRoles={["user", "admin"]}>
               <PublicLayout>
                 <WishlistPage />
+              </PublicLayout>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route 
+          path="/my-account"
+          element={
+            <ProtectedRoute allowedRoles={["user", "admin", "seller"]}>
+              <PublicLayout>
+                <MyAccount />
               </PublicLayout>
             </ProtectedRoute>
           }

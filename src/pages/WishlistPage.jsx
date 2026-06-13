@@ -1,15 +1,33 @@
 import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+import { useLocation } from 'react-router-dom';
 import { getAllWishlist, deleteWishlistItem, updateWishlistStatus } from '../redux/slices/wishlistSlice';
 
 export default function WishlistContent() {
   const dispatch = useDispatch();
+  const location = useLocation();
   const { wishlistData, isLoading } = useSelector((state) => state.wishlist);
   const [updatingStatus, setUpdatingStatus] = useState({});
 
   useEffect(() => {
     dispatch(getAllWishlist());
   }, [dispatch]);
+
+  const queryParams = new URLSearchParams(location.search);
+  const searchQuery = queryParams.get("search") || "";
+
+  const filteredWishlist = wishlistData.filter((item) => {
+    if (!searchQuery) return true;
+    const book = item.book || {};
+    const title = book.title || "";
+    const author = book.author || "";
+    const category = book.category?.category_name || book.category || "";
+    return (
+      title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      author.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      category.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  });
 
   const handleDelete = async (wishlistId) => {
     if (window.confirm('Are you sure you want to remove this book from your wishlist?')) {
@@ -96,11 +114,21 @@ export default function WishlistContent() {
             Browse Books
           </a>
         </div>
+      ) : filteredWishlist.length === 0 ? (
+        <div className="text-center py-20">
+          <div className="mb-6">
+            <span className="material-symbols-outlined text-[80px] text-[#c0c8c9]">search_off</span>
+          </div>
+          <h2 className="text-2xl font-bold text-[#002629] mb-3 font-['Manrope']">No matching books found</h2>
+          <p className="text-[#404849] mb-8 max-w-md mx-auto">
+            We couldn't find any books in your wishlist matching "{searchQuery}".
+          </p>
+        </div>
       ) : (
         <>
           {/* 2. Wishlist Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-            {wishlistData.map((item) => {
+            {filteredWishlist.map((item) => {
               const book = item.book || {};
               return (
                 <div 

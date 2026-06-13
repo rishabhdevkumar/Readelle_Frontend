@@ -1,6 +1,7 @@
-import { useState } from "react";
-import React,{useEffect} from "react";
-import { useDispatch,useSelector } from "react-redux";
+import { useState, useEffect } from "react";
+import React from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { useLocation, useNavigate } from "react-router-dom";
 import { getAllBooks } from "../redux/slices/bookSlice";
 import { getAllCategories } from "../redux/slices/categorySlice";
 
@@ -118,6 +119,8 @@ function BookCard({ book }) {
 export default function EPustakalay() {
 
 const dispatch = useDispatch();
+const location = useLocation();
+const navigate = useNavigate();
   
   const books = useSelector(
       (state) => state.books.booksData || []
@@ -139,11 +142,36 @@ const dispatch = useDispatch();
     ? Math.max(...books.map(book => book.price))
     : 10000;
 
-  const [checkedCategories, setCheckedCategories] = useState([]);
+  const queryParams = new URLSearchParams(location.search);
+  const urlCategory = queryParams.get("category");
+  const stateCategory = location.state?.selectedCategory;
+  const initialCategory = stateCategory || urlCategory;
+
+  const [checkedCategories, setCheckedCategories] = useState(
+    initialCategory ? [initialCategory] : []
+  );
   const [activeLanguage, setActiveLanguage] = useState("");
   const [priceRange, setPriceRange] = useState(5000);
   const [sortBy, setSortBy] = useState("Popularity");
   const [searchTerm, setSearchTerm] = useState("");
+
+  // Sync category filter whenever URL search params change
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const catFromUrl = params.get("category") || location.state?.selectedCategory || "";
+    if (catFromUrl) {
+      setCheckedCategories([catFromUrl]);
+    } else {
+      setCheckedCategories([]);
+    }
+  }, [location.search, location.state]);
+
+  // Sync priceRange when books load
+  useEffect(() => {
+    if (books.length > 0) {
+      setPriceRange(maxPrice);
+    }
+  }, [books, maxPrice]);
 
   const toggleCategory = (cat) => {
     setCheckedCategories((prev) =>
@@ -151,20 +179,49 @@ const dispatch = useDispatch();
     );
   };
 
+  // In-page live search from the header search bar (globalSearch event)
+  const [liveSearch, setLiveSearch] = useState("");
+  useEffect(() => {
+    const handleSearch = (e) => setLiveSearch(e.detail || "");
+    window.addEventListener('globalSearch', handleSearch);
+    return () => window.removeEventListener('globalSearch', handleSearch);
+  }, []);
+
+  // When URL ?search= param changes (navigating from another page), sync liveSearch
+  useEffect(() => {
+    const urlSearch = new URLSearchParams(location.search).get("search") || "";
+    setLiveSearch(urlSearch);
+  }, [location.search]);
+
+  // Effective search = live typing OR URL param (whichever has value)
+  const searchQuery = liveSearch || queryParams.get("search") || "";
+
   const filteredBooks = books.filter((book) => {
+    const bookCategoryId = (book.category && typeof book.category === 'object') ? book.category._id : book.category;
+    
     const categoryMatch =
       checkedCategories.length === 0 ||
-      checkedCategories.includes(book.category);
+      checkedCategories.includes(bookCategoryId);
 
-    
-  const languageMatch =
-    activeLanguage === "" ||
-    book.language === activeLanguage;
+    const languageMatch =
+      activeLanguage === "" ||
+      book.language === activeLanguage;
 
-   const priceMatch = book.price <= priceRange;
+    const priceMatch = book.price <= priceRange;
 
-  return categoryMatch && languageMatch && priceMatch ;
-});
+    // Search query matches title, author, or category name
+    const categoryName = (book.category && typeof book.category === 'object')
+      ? book.category.category_name
+      : (categories.find(c => c._id === bookCategoryId)?.category_name || "");
+
+    const searchMatch =
+      searchQuery === "" ||
+      book.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      book.author.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      categoryName.toLowerCase().includes(searchQuery.toLowerCase());
+
+    return categoryMatch && languageMatch && priceMatch && searchMatch;
+  });
 
 
 const sortedBooks = [...filteredBooks];
@@ -363,8 +420,8 @@ switch (sortBy) {
             onClick={() => {
               setCheckedCategories([]);
               setActiveLanguage("");
-              setPriceRange(5000);
-              
+              setPriceRange(maxPrice);
+              navigate("/books");
             }}
           >
             Reset All

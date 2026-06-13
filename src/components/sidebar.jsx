@@ -53,13 +53,13 @@ function ProfilePanel({ data, role, displayName, roleLabel, onClose, onLogout })
     <>
       {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[55]"
+        className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[95]"
         onClick={onClose}
       />
 
-      {/* Panel — sits over the sidebar */}
+      {/* Panel — full height, over everything including header */}
       <div
-        className="fixed top-[70px] left-0 w-[280px] bottom-0 z-[60] bg-white border-r border-slate-100 shadow-2xl flex flex-col"
+        className="fixed top-0 left-0 w-[280px] bottom-0 z-[100] bg-white border-r border-slate-100 shadow-2xl flex flex-col"
         style={{ animation: 'slideInLeft 0.22s ease-out' }}
       >
         {/* Header */}

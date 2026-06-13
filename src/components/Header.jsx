@@ -98,10 +98,38 @@ const Header = ({ toggleSidebar }) => {
     return 'Search across catalog...';
   };
 
+  const isOnBooksPage = location.pathname === '/books';
+
   const handleSearchChange = (e) => {
     const val = e.target.value;
     setSearchValue(val);
-    window.dispatchEvent(new CustomEvent('globalSearch', { detail: val }));
+    if (isOnBooksPage) {
+      // instant in-page filter via event
+      window.dispatchEvent(new CustomEvent('globalSearch', { detail: val }));
+    }
+  };
+
+  const handleSearchSubmit = () => {
+    const val = searchValue.trim();
+    if (!val) return;
+    if (isOnBooksPage) {
+      window.dispatchEvent(new CustomEvent('globalSearch', { detail: val }));
+    } else {
+      navigate(`/books?search=${encodeURIComponent(val)}`);
+    }
+  };
+
+  const handleSearchKeyDown = (e) => {
+    if (e.key === 'Enter') handleSearchSubmit();
+    if (e.key === 'Escape') {
+      setSearchValue('');
+      if (isOnBooksPage) window.dispatchEvent(new CustomEvent('globalSearch', { detail: '' }));
+    }
+  };
+
+  const handleClearSearch = () => {
+    setSearchValue('');
+    if (isOnBooksPage) window.dispatchEvent(new CustomEvent('globalSearch', { detail: '' }));
   };
 
   useEffect(() => {
@@ -111,6 +139,13 @@ const Header = ({ toggleSidebar }) => {
     window.addEventListener('resetSearch', handleReset);
     return () => window.removeEventListener('resetSearch', handleReset);
   }, []);
+
+  // When navigating away from books page, clear search
+  useEffect(() => {
+    if (!isOnBooksPage) {
+      setSearchValue('');
+    }
+  }, [location.pathname]);
 
   return (
     <>
@@ -133,15 +168,27 @@ const Header = ({ toggleSidebar }) => {
           </div>
 
           {/* Header Search Bar (Desktop only) */}
-          <div className="hidden lg:flex items-center bg-[#f1f5f9] rounded-full px-4 py-2 w-[300px] ml-4 border border-slate-200/50 hover:border-slate-300/60 focus-within:border-[#0a2f35]/25 focus-within:bg-white transition-all">
-            <Search className="w-4 h-4 text-slate-400 flex-shrink-0" />
+          <div className="hidden lg:flex items-center bg-[#f1f5f9] rounded-full px-4 py-2 w-[300px] ml-4 border border-slate-200/50 hover:border-slate-300/60 focus-within:border-[#0a2f35]/25 focus-within:bg-white transition-all group">
+            <button onClick={handleSearchSubmit} className="bg-transparent border-none p-0 cursor-pointer flex-shrink-0" tabIndex={-1}>
+              <Search className="w-4 h-4 text-slate-400 hover:text-[#0a2f35] transition-colors" />
+            </button>
             <input
               type="text"
               placeholder={getSearchPlaceholder()}
               value={searchValue}
               onChange={handleSearchChange}
+              onKeyDown={handleSearchKeyDown}
               className="border-none bg-transparent outline-none ml-2.5 w-full text-xs text-slate-700 placeholder-slate-400 font-medium"
             />
+            {searchValue && (
+              <button
+                onClick={handleClearSearch}
+                className="bg-transparent border-none p-0 cursor-pointer flex-shrink-0 ml-1 text-slate-400 hover:text-slate-600 transition-colors"
+                tabIndex={-1}
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
           </div>
         </div>
 

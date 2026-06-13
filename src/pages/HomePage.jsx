@@ -1,36 +1,73 @@
-import { Link } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import { getAllCategories } from "../redux/slices/categorySlice";
+import { getAllBooks } from "../redux/slices/bookSlice";
+import toast from "react-hot-toast";
 
 // ── Icons ──────────────────────────────────────────────────────────────────
 const ArrowForwardIcon = () => (
   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M5 12h14M12 5l7 7-7 7"/>
+    <path d="M5 12h14M12 5l7 7-7 7" />
   </svg>
 );
 const NorthEastIcon = () => (
   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M7 17L17 7M17 7H7M17 7v10"/>
+    <path d="M7 17L17 7M17 7H7M17 7v10" />
   </svg>
 );
 const BookIcon = () => (
   <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" /><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
   </svg>
 );
 const CartIcon = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
-    <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
+    <circle cx="9" cy="21" r="1" /><circle cx="20" cy="21" r="1" />
+    <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
   </svg>
 );
 const ChevronLeftIcon = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><path d="M15 18l-6-6 6-6"/></svg>
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><path d="M15 18l-6-6 6-6" /></svg>
 );
 const ChevronRightIcon = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><path d="M9 18l6-6-6-6"/></svg>
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><path d="M9 18l6-6-6-6" /></svg>
 );
 
-// ── Data ───────────────────────────────────────────────────────────────────
-const BOOKS = [
+// ── Static images for each category slot (never change) ────────────────────
+const STATIC_CAT_IMAGES = [
+  {
+    concept: "fiction",
+    img: "https://lh3.googleusercontent.com/aida-public/AB6AXuCA3ecqLdKTybXlahKXvNgMdmZ-o4OJbhcmEWB9mL4IwFhI14mo2YiVqd7IB9I-DZsvfw2A3qq_nkffWsCnfmXjiwrMF1-MEbAHv5szCzVqALSKf7a11ktYUPFqMkpXonL46FOUD54H4rWw0l8YEfWIRXIZs3gAterEn76lFM-6gbEcc6-S5Okn_P2yYL4yM7UPNDp5jK5G1vlF2j7WhkRV7Kte4EfNscA5sPBkQNNCTkUa0bfM9EIPbyzX8IlkigQc-i5bfpm7Ig",
+    defaultName: "Fiction & Prose",
+    desc: "Journey into worlds of imagination and masterful storytelling.",
+    overlay: "from-[#002629]/80",
+  },
+  {
+    concept: "academic",
+    img: "https://lh3.googleusercontent.com/aida-public/AB6AXuAh_DDB9a_t6zcsFAPGLuJqbSkENU4LKtyMTDmlTzAh6I8IEkzHzFQW9Kxcq7cA6nq911jn4BZw9aYzM64ABV-jVQ4C9erPUAxjYDrZ-rmjvkY2pLl0xtELHleVcFjk3-uKarDMXJEokcRrETreaX4C5QIMnIGG1UhvmHGTPS0NF1EFsUXwX98T_uKfy9CwjcBH16NleAhEIJ3TfAQSV_KLrCj8LKcFFQDN7kjDGmnTf_P1Or0yOKS535EYILnvWjI_sLgIr6A1Sg",
+    defaultName: "Academic",
+    desc: "",
+    overlay: "from-[#381905]/80",
+  },
+  {
+    concept: "programming",
+    img: "https://lh3.googleusercontent.com/aida-public/AB6AXuBjkaG8giLeg1dJhkFoC4UMLd9sRtvs7x5nS89x_3jsva1SXQjhg8xUpWXC8iyTGbgdeG6LbF6Rn39hnVlB2FWcXD8ra2bruvbNOz3WE0N9qbl49MGK_-t66XZWRUaulHAOYR2LBme9bwNqgY4TRV2N5zqmbPw_1mr-mQpSYDDqz-zE3ll66Eok7WQgmBGb67Bb7G4iUIqHLbgWgsTUoDjaWBiMVRYACo02KIsT-bEulnA8k4oG4WaNv58Gw13qdLlMTXQlUxfREw",
+    defaultName: "Programming",
+    desc: "",
+    overlay: "from-black/80",
+  },
+  {
+    concept: "philosophy",
+    img: "https://lh3.googleusercontent.com/aida-public/AB6AXuCa9vRg6jLYcT0TApT3O8Ltgbf_wYXte3Ig2BdGJw-qpNECPHCtxgcxF5HGmCjkSxvly3w2yg3hqnlJ7u28F-oE2ep4fygMQD1pUdE4El3MDr-XXLyMejbHJW8YLDN8MVFYoyJBZjlFHctAQtjV0F99hCQUDHuSg75Amvgnz6c70uaOKqWgSEv1cmZrd-s-u8i4uD7k6hLJ8BYe8036wrjkMAawvC4hPmCRyFF4oCIfaoGg8jfVoE74NjLLBrYqDnJzgJm00TJ0aA",
+    defaultName: "Philosophy & Ethics",
+    desc: "Profound wisdom for the modern thinker.",
+    overlay: "from-[#002629]/80",
+  },
+];
+
+// ── Static fallback books ──────────────────────────────────────────────────
+const STATIC_BOOKS = [
   {
     id: 1,
     category: "Programming",
@@ -60,58 +97,26 @@ const BOOKS = [
     category: "Technology",
     title: "The Nature of Technology",
     author: "W. Brian Arthur",
-    price: "₹3000",
-    img: "https://lh3.googleusercontent.com/aida-public/AB6AXuBkw3aY6__XId_Bmi-rr-J-Y6huBhlLAS343vPR7gvcuiTya2-F3YjpeFnrIgKNbkD4hEEf1sIvf3BsfVNQFs_SCw-qu6ChsuT-64IItMvqONLdkgurWOds-ucOCiJnAM3I3TjMinpDSg2twHCzUDniqBaRUaP8DPhDjz3QfY4YeQZDq8Rdqjnd4qyV3UXFpNUCdHWL5V_FTYp13PSQkzWKvQkUOBlRSpph4C-Q5vIcy1xjIZU2DgPLjdcIEO-lZJTw3yQofbDZOg",
-    img:"https://d28hgpri8am2if.cloudfront.net/book_images/onix/cvr9781439165782/the-nature-of-technology-9781439165782_hr.jpg"
+    price: "₹3,000",
+    img: "https://d28hgpri8am2if.cloudfront.net/book_images/onix/cvr9781439165782/the-nature-of-technology-9781439165782_hr.jpg",
   },
 ];
 
-const CATEGORIES = [
-  {
-    id: 1,
-    title: "Fiction & Prose",
-    desc: "Journey into worlds of imagination and masterful storytelling.",
-    cta: "View Category",
-    span: "md:col-span-2 md:row-span-2",
-    titleSize: "text-2xl",
-    showDesc: true,
-    overlay: "from-[#002629]/80",
-    img: "https://lh3.googleusercontent.com/aida-public/AB6AXuCA3ecqLdKTybXlahKXvNgMdmZ-o4OJbhcmEWB9mL4IwFhI14mo2YiVqd7IB9I-DZsvfw2A3qq_nkffWsCnfmXjiwrMF1-MEbAHv5szCzVqALSKf7a11ktYUPFqMkpXonL46FOUD54H4rWw0l8YEfWIRXIZs3gAterEn76lFM-6gbEcc6-S5Okn_P2yYL4yM7UPNDp5jK5G1vlF2j7WhkRV7Kte4EfNscA5sPBkQNNCTkUa0bfM9EIPbyzX8IlkigQc-i5bfpm7Ig",
-  },
-  {
-    id: 2,
-    title: "Academic",
-    desc: "",
-    cta: "Explore Journals",
-    span: "",
-    titleSize: "text-xl",
-    showDesc: false,
-    overlay: "from-[#381905]/80",
-    img: "https://lh3.googleusercontent.com/aida-public/AB6AXuAh_DDB9a_t6zcsFAPGLuJqbSkENU4LKtyMTDmlTzAh6I8IEkzHzFQW9Kxcq7cA6nq911jn4BZw9aYzM64ABV-jVQ4C9erPUAxjYDrZ-rmjvkY2pLl0xtELHleVcFjk3-uKarDMXJEokcRrETreaX4C5QIMnIGG1UhvmHGTPS0NF1EFsUXwX98T_uKfy9CwjcBH16NleAhEIJ3TfAQSV_KLrCj8LKcFFQDN7kjDGmnTf_P1Or0yOKS535EYILnvWjI_sLgIr6A1Sg",
-  },
-  {
-    id: 3,
-    title: "Programming",
-    desc: "",
-    cta: "Technical Guides",
-    span: "",
-    titleSize: "text-xl",
-    showDesc: false,
-    overlay: "from-black/80",
-    img: "https://lh3.googleusercontent.com/aida-public/AB6AXuBjkaG8giLeg1dJhkFoC4UMLd9sRtvs7x5nS89x_3jsva1SXQjhg8xUpWXC8iyTGbgdeG6LbF6Rn39hnVlB2FWcXD8ra2bruvbNOz3WE0N9qbl49MGK_-t66XZWRUaulHAOYR2LBme9bwNqgY4TRV2N5zqmbPw_1mr-mQpSYDDqz-zE3ll66Eok7WQgmBGb67Bb7G4iUIqHLbgWgsTUoDjaWBiMVRYACo02KIsT-bEulnA8k4oG4WaNv58Gw13qdLlMTXQlUxfREw",
-  },
-  {
-    id: 4,
-    title: "Philosophy & Ethics",
-    desc: "Profound wisdom for the modern thinker.",
-    cta: "",
-    span: "md:col-span-2",
-    titleSize: "text-xl",
-    showDesc: true,
-    overlay: "from-[#002629]/80",
-    img: "https://lh3.googleusercontent.com/aida-public/AB6AXuCa9vRg6jLYcT0TApT3O8Ltgbf_wYXte3Ig2BdGJw-qpNECPHCtxgcxF5HGmCjkSxvly3w2yg3hqnlJ7u28F-oE2ep4fygMQD1pUdE4El3MDr-XXLyMejbHJW8YLDN8MVFYoyJBZjlFHctAQtjV0F99hCQUDHuSg75Amvgnz6c70uaOKqWgSEv1cmZrd-s-u8i4uD7k6hLJ8BYe8036wrjkMAawvC4hPmCRyFF4oCIfaoGg8jfVoE74NjLLBrYqDnJzgJm00TJ0aA",
-  },
-];
+function getCatName(cat) {
+  return cat?.category_name || cat?.name || null;
+}
+
+function matchCategoryName(categories, concept) {
+  const matched = categories.find((cat) => {
+    const name = (getCatName(cat) || "").toLowerCase();
+    if (concept === "fiction") return name.includes("fiction") || name.includes("prose") || name.includes("novel");
+    if (concept === "academic") return name.includes("academic") || name.includes("journal") || name.includes("study") || name.includes("education") || name.includes("science");
+    if (concept === "programming") return name.includes("programming") || name.includes("code") || name.includes("tech") || name.includes("software");
+    if (concept === "philosophy") return name.includes("philosophy") || name.includes("ethics");
+    return false;
+  });
+  return matched ? getCatName(matched) : null;
+}
 
 // ── Sub-components ─────────────────────────────────────────────────────────
 function BookCard({ book }) {
@@ -128,11 +133,11 @@ function BookCard({ book }) {
         <span className="text-[10px] uppercase font-bold tracking-widest text-[#083d41]">
           {book.category}
         </span>
-        <h3 className="text-lg font-bold text-[#181c20] leading-tight">{book.title}</h3>
-        <p className="text-sm text-[#404849] font-medium">{book.author}</p>
+        <h3 className="text-lg font-bold text-[#181c20] leading-tight line-clamp-1">{book.title}</h3>
+        <p className="text-sm text-[#404849] font-medium truncate">{book.author}</p>
         <div className="pt-4 flex items-center justify-between">
           <span className="text-lg font-bold text-[#002629]">{book.price}</span>
-          <button className="w-10 h-10 rounded-full bg-[#002629] text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+          <button className="w-10 h-10 rounded-full bg-[#002629] text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
             <CartIcon />
           </button>
         </div>
@@ -141,38 +146,124 @@ function BookCard({ book }) {
   );
 }
 
-function CategoryCard({ cat }) {
+function BentoCard({ img, name, desc, overlay, showDesc, navigate, categoryId }) {
   return (
-    <div className={`group relative overflow-hidden rounded-xl bg-white ${cat.span}`}>
+    <div
+      onClick={() => navigate && categoryId ? navigate(`/books?category=${categoryId}`) : navigate && navigate("/books")}
+      className="group relative overflow-hidden rounded-xl bg-[#111] cursor-pointer w-full h-full"
+      style={{ minHeight: "100%" }}
+    >
       <img
-        src={cat.img}
-        alt={cat.title}
+        src={img}
+        alt={name}
         className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
       />
-      <div className={`absolute inset-0 bg-gradient-to-t ${cat.overlay} to-transparent`} />
-      <div className="absolute bottom-0 p-6 md:p-8">
-        <h3 className={`${cat.titleSize} font-bold text-white mb-1 md:mb-2`}>{cat.title}</h3>
-        {cat.showDesc && cat.desc && (
-          <p className="text-white/80 text-sm mb-4">{cat.desc}</p>
+      <div className={`absolute inset-0 bg-gradient-to-t ${overlay} to-transparent`} />
+      <div className="absolute bottom-0 p-5 md:p-6">
+        <h3 className="text-xl font-bold text-white mb-1">{name}</h3>
+        {showDesc && desc && (
+          <p className="text-white/80 text-sm mb-3">{desc}</p>
         )}
-        {cat.cta && (
-          <button className="text-white text-xs font-bold uppercase tracking-widest flex items-center gap-2 hover:underline">
-            {cat.cta} <NorthEastIcon />
-          </button>
-        )}
+        <button className="text-white text-xs font-bold uppercase tracking-widest flex items-center gap-2 hover:underline cursor-pointer">
+          View Category <NorthEastIcon />
+        </button>
       </div>
     </div>
   );
 }
 
-// ── Main Presenter ─────────────────────────────────────────────────────────
-export default function HomePresenter({ newsletterEmail, setNewsletterEmail, handleNewsletterSubmit }) {
+export default function HomePage() {
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+
+  const [newsletterEmail, setNewsletterEmail] = useState("");
+
+  const categories = useSelector((state) => state.categories?.categoriesData || []);
+  const books = useSelector((state) => state.books?.booksData || []);
+
+  useEffect(() => {
+    dispatch(getAllCategories());
+    dispatch(getAllBooks());
+  }, [dispatch]);
+
+  const handleNewsletterSubmit = (e) => {
+    e.preventDefault();
+    if (newsletterEmail.trim()) {
+      toast.success("Thank you for subscribing to ePustakalay curation digest!");
+      setNewsletterEmail("");
+    } else {
+      toast.error("Please enter a valid email address.");
+    }
+  };
+
+  const bentoCards = STATIC_CAT_IMAGES.map((slot, index) => {
+
+    const keywordMatched = categories.find((cat) => {
+      const name = (getCatName(cat) || "").toLowerCase();
+      if (slot.concept === "fiction") return name.includes("fiction") || name.includes("prose") || name.includes("novel");
+      if (slot.concept === "academic") return name.includes("academic") || name.includes("journal") || name.includes("study") || name.includes("education") || name.includes("science");
+      if (slot.concept === "programming") return name.includes("programming") || name.includes("code") || name.includes("tech") || name.includes("software");
+      if (slot.concept === "philosophy") return name.includes("philosophy") || name.includes("ethics");
+      return false;
+    });
+    const indexFallback = categories[index] || null;
+    const resolvedCat = keywordMatched || indexFallback;
+    return {
+      ...slot,
+      categoryId: resolvedCat?._id || null,
+      name: resolvedCat ? getCatName(resolvedCat) : slot.defaultName,
+    };
+  });
+
+  const displayBooks = (
+    books.length > 0
+      ? books.map((b) => {
+        const catId = b.category && typeof b.category === "object" ? b.category._id : b.category;
+        const catObj = categories.find((c) => c._id === catId);
+        return {
+          id: b._id,
+          category: catObj ? catObj.category_name : "General",
+          title: b.title,
+          author: b.author,
+          price: `₹${b.price}`,
+          img: b.cover_image,
+        };
+      })
+      : STATIC_BOOKS
+  ).slice(0, 4);
+
   return (
     <>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600&display=swap');
         .hp-headline { font-family: 'Manrope', sans-serif; }
         .hp-body     { font-family: 'Inter', sans-serif; }
+        .bento-grid  {
+          display: grid;
+          gap: 1.5rem;
+          grid-template-columns: 1fr;
+          grid-template-rows: auto;
+          min-height: 500px;
+        }
+        @media (min-width: 768px) {
+          .bento-grid {
+            grid-template-columns: repeat(3, 1fr);
+            grid-template-rows: repeat(2, 260px);
+          }
+          .bento-fiction     { grid-column: 1 / 3; grid-row: 1 / 3; }
+          .bento-academic    { grid-column: 3 / 4; grid-row: 1 / 2; }
+          .bento-programming { grid-column: 3 / 4; grid-row: 2 / 3; } /* was missing — swap with philosophy */
+        }
+        @media (min-width: 1024px) {
+          .bento-grid {
+            grid-template-columns: repeat(4, 1fr);
+            grid-template-rows: repeat(2, 270px);
+          }
+          .bento-fiction     { grid-column: 1 / 3; grid-row: 1 / 3; }
+          .bento-academic    { grid-column: 3 / 4; grid-row: 1 / 2; }
+          .bento-programming { grid-column: 4 / 5; grid-row: 1 / 2; }
+          .bento-philosophy  { grid-column: 3 / 5; grid-row: 2 / 3; }
+        }
       `}</style>
 
       <div className="hp-body bg-[#f7f9ff] text-[#181c20]">
@@ -202,7 +293,7 @@ export default function HomePresenter({ newsletterEmail, setNewsletterEmail, han
                 >
                   Explore Books
                 </Link>
-                <button className="flex items-center gap-2 text-[#002629] font-bold group/btn hover:gap-3 transition-all">
+                <button className="flex items-center gap-2 text-[#002629] font-bold group/btn hover:gap-3 transition-all cursor-pointer">
                   Our Library Philosophy
                   <span className="group-hover/btn:translate-x-1 transition-transform">
                     <ArrowForwardIcon />
@@ -212,12 +303,13 @@ export default function HomePresenter({ newsletterEmail, setNewsletterEmail, han
             </div>
 
             {/* Right — hero image */}
-            <div className="relative  xl:h-[600px] hidden lg:block">
+            <div className="relative xl:h-[600px] hidden lg:block">
               <div className="absolute inset-0 bg-[#e5e8ee] rounded-4xl rotate-3"></div>
-            <img
-               src="https://lh3.googleusercontent.com/aida-public/AB6AXuCiJXHShr7dXIMwT7fsFt_Jjl_WeG7yXhzSS-KTx3HtHe4391t2IFMgxFDbIkgn2B-p_w1a22wTGxSQMPRK8kxaGJQzzLYs4IllU65e_ULFtnCX06WTioDPQdqaihReDlEsG0CB0ZwmzzR11Z7I4jnLq4k5DS9xfQu-7Fj45y5lX3EXjpznhyYvkHwgxrewIYm_ZsVEtRemyHpxK2hVSwb98acNxjkVcsChZdZcijRvxPWlHKyi93sT0LLpsw8l413jWClh5K3Mdg"
-              className="relative rounded-4xl h-150 w-full object-cover shadow-2xl"
-            />
+              <img
+                src="https://lh3.googleusercontent.com/aida-public/AB6AXuCiJXHShr7dXIMwT7fsFt_Jjl_WeG7yXhzSS-KTx3HtHe4391t2IFMgxFDbIkgn2B-p_w1a22wTGxSQMPRK8kxaGJQzzLYs4IllU65e_ULFtnCX06WTioDPQdqaihReDlEsG0CB0ZwmzzR11Z7I4jnLq4k5DS9xfQu-7Fj45y5lX3EXjpznhyYvkHwgxrewIYm_ZsVEtRemyHpxK2hVSwb98acNxjkVcsChZdZcijRvxPWlHKyi93sT0LLpsw8l413jWClh5K3Mdg"
+                className="relative rounded-4xl h-150 w-full object-cover shadow-2xl"
+                alt="Curator reading"
+              />
               {/* Floating card */}
               <div className="absolute -bottom-8 -left-8 bg-white p-5 rounded-2xl shadow-xl shadow-black/5 flex gap-4 max-w-xs items-center">
                 <div className="w-12 h-12 bg-[#ffdbc9] rounded-full flex items-center justify-center text-[#381905] flex-shrink-0">
@@ -243,10 +335,56 @@ export default function HomePresenter({ newsletterEmail, setNewsletterEmail, han
                 <p className="text-[#404849] mt-2">Curated categories for every intellectual pursuit.</p>
               </div>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6 h-auto lg:h-[600px]">
-              {CATEGORIES.map(cat => (
-                <CategoryCard key={cat.id} cat={cat} />
-              ))}
+
+            <div className="bento-grid">
+              <div className="bento-fiction">
+                <BentoCard
+                  img={bentoCards[0].img}
+                  name={bentoCards[0].name}
+                  desc={bentoCards[0].desc}
+                  overlay={bentoCards[0].overlay}
+                  showDesc={true}
+                  navigate={navigate}
+                  categoryId={bentoCards[0].categoryId}
+                />
+              </div>
+
+              {/* Academic — top right */}
+              <div className="bento-academic">
+                <BentoCard
+                  img={bentoCards[1].img}
+                  name={bentoCards[1].name}
+                  desc={bentoCards[1].desc}
+                  overlay={bentoCards[1].overlay}
+                  showDesc={false}
+                  navigate={navigate}
+                  categoryId={bentoCards[1].categoryId}
+                />
+              </div>
+
+              <div className="bento-programming">
+                <BentoCard
+                  img={bentoCards[2].img}
+                  name={bentoCards[2].name}
+                  desc={bentoCards[2].desc}
+                  overlay={bentoCards[2].overlay}
+                  showDesc={false}
+                  navigate={navigate}
+                  categoryId={bentoCards[2].categoryId}
+                />
+              </div>
+
+              <div className="bento-philosophy">
+                <BentoCard
+                  img={bentoCards[3].img}
+                  name={bentoCards[3].name}
+                  desc={bentoCards[3].desc}
+                  overlay={bentoCards[3].overlay}
+                  showDesc={true}
+                  navigate={navigate}
+                  categoryId={bentoCards[3].categoryId}
+                />
+              </div>
             </div>
           </div>
         </section>
@@ -258,16 +396,16 @@ export default function HomePresenter({ newsletterEmail, setNewsletterEmail, han
               Featured Arrivals
             </h2>
             <div className="flex gap-3">
-              <button className="w-10 h-10 flex items-center justify-center rounded-full bg-[#e5e8ee] text-[#404849] hover:bg-[#002629] hover:text-white transition-colors">
+              <button className="w-10 h-10 flex items-center justify-center rounded-full bg-[#e5e8ee] text-[#404849] hover:bg-[#002629] hover:text-white transition-colors cursor-pointer">
                 <ChevronLeftIcon />
               </button>
-              <button className="w-10 h-10 flex items-center justify-center rounded-full bg-[#e5e8ee] text-[#404849] hover:bg-[#002629] hover:text-white transition-colors">
+              <button className="w-10 h-10 flex items-center justify-center rounded-full bg-[#e5e8ee] text-[#404849] hover:bg-[#002629] hover:text-white transition-colors cursor-pointer">
                 <ChevronRightIcon />
               </button>
             </div>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-            {BOOKS.map(book => (
+            {displayBooks.map((book) => (
               <BookCard key={book.id} book={book} />
             ))}
           </div>
@@ -289,21 +427,21 @@ export default function HomePresenter({ newsletterEmail, setNewsletterEmail, han
               <p className="text-[#7aa8ac] text-xl mb-10 font-light">
                 Join 50,000+ readers who receive our curated weekend reading digest and early access to rare digital collections.
               </p>
-              <div className="flex flex-col sm:flex-row gap-4">
+              <form onSubmit={handleNewsletterSubmit} className="flex flex-col sm:flex-row gap-4">
                 <input
                   type="email"
                   placeholder="Your academic email"
                   value={newsletterEmail}
-                  onChange={e => setNewsletterEmail(e.target.value)}
+                  onChange={(e) => setNewsletterEmail(e.target.value)}
                   className="flex-grow bg-white/10 border-none rounded-xl px-6 py-4 text-white placeholder:text-white/40 focus:ring-2 focus:ring-[#7aa8ac] outline-none backdrop-blur-md"
                 />
                 <button
-                  onClick={handleNewsletterSubmit}
-                  className="px-8 py-4 bg-white text-[#002629] font-bold rounded-xl hover:bg-[#7aa8ac] transition-colors whitespace-nowrap"
+                  type="submit"
+                  className="px-8 py-4 bg-white text-[#002629] font-bold rounded-xl hover:bg-[#7aa8ac] transition-colors whitespace-nowrap cursor-pointer"
                 >
                   Subscribe
                 </button>
-              </div>
+              </form>
             </div>
           </div>
         </section>
