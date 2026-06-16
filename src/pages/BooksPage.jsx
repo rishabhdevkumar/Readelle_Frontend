@@ -4,6 +4,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { useLocation, useNavigate } from "react-router-dom";
 import { getAllBooks } from "../redux/slices/bookSlice";
 import { getAllCategories } from "../redux/slices/categorySlice";
+import { addToCart, getCart } from "../redux/slices/cartSlice";
 import { toggleWishlist, getAllWishlist } from "../redux/slices/wishlistSlice";
 import toast from "react-hot-toast";
 
@@ -27,18 +28,34 @@ const colors = {
 };
 
 
-const languages = ["All","English", "Hindi"];
+const languages = ["All", "English", "Hindi"];
 
 function BookCard({ book, isInWishlist, onWishlistToggle }) {
   const navigate = useNavigate();
   const [hovered, setHovered] = useState(false);
   const [added, setAdded] = useState(false);
   const [isTogglingWishlist, setIsTogglingWishlist] = useState(false);
+  const dispatch = useDispatch();
 
-  const handleAdd = () => {
-    setAdded(true);
-    setTimeout(() => setAdded(false), 1500);
+
+  const cartItem = useSelector(
+    (state) => state.cart.cartData || []
+  );
+
+
+  const isInCart = cartItem.some(
+    (item) => item?.book?._id === book._id
+  );
+
+  const handleAdd = async (e) => {
+    e.stopPropagation();
+
+    await dispatch(addToCart(book._id));
+    await dispatch(getCart());
+    toast.success("Added to cart!");
+
   };
+
 
   const handleWishlistClick = async (e) => {
     e.stopPropagation();
@@ -46,6 +63,8 @@ function BookCard({ book, isInWishlist, onWishlistToggle }) {
     await onWishlistToggle(book._id);
     setIsTogglingWishlist(false);
   };
+
+
 
   return (
     <div
@@ -79,7 +98,7 @@ function BookCard({ book, isInWishlist, onWishlistToggle }) {
               : `${colors.primary}00`,
           }}
         />
-        
+
         {/* Wishlist Heart Icon */}
         <button
           onClick={handleWishlistClick}
@@ -91,7 +110,7 @@ function BookCard({ book, isInWishlist, onWishlistToggle }) {
           }}
         >
           <svg width="18" height="18" viewBox="0 0 24 24" fill={isInWishlist ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
           </svg>
         </button>
       </div>
@@ -123,18 +142,31 @@ function BookCard({ book, isInWishlist, onWishlistToggle }) {
           </span>
           <button
             onClick={handleAdd}
+            disabled={isInCart}
             className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all duration-200 active:scale-95"
             style={{
-              background: `linear-gradient(135deg, ${colors.primary}, ${colors.primaryContainer})`,
-              color: colors.onPrimary,
-              opacity: added ? 0.8 : 1,
+              // Switches to a success/disabled color profile if already in cart
+              background: isInCart
+                ? `linear-gradient(135deg, ${colors.surfaceVariant || '#e2e8f0'}, ${colors.surfaceContainerLow || '#cbd5e1'})`
+                : `linear-gradient(135deg, ${colors.primary}, ${colors.primaryContainer})`,
+              color: isInCart ? (colors.onSurfaceVariant || '#64748b') : colors.onPrimary,
+              cursor: isInCart ? 'not-allowed' : 'pointer',
             }}
           >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M7 18c-1.1 0-1.99.9-1.99 2S5.9 22 7 22s2-.9 2-2-.9-2-2-2zm10 0c-1.1 0-1.99.9-1.99 2s.89 2 1.99 2 2-.9 2-2-.9-2-2-2zm-2.2-5c.75 0 1.41-.41 1.75-1.03l3.58-6.49A1 1 0 0 0 19.24 4H5.21L4.27 2H1v2h2l3.6 7.59L5.24 14c-.16.28-.24.61-.24.96C5 16.1 5.9 17 7 17h12v-2H7.42c-.13 0-.25-.11-.25-.25l.03-.12L8.1 13h6.7z"/>
-            </svg>
-            {added ? "Added!" : "Add"}
+            {isInCart ? (
+              // Checkmark Icon for "Added!" state
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+            ) : (
+              // Shopping Cart Icon for "Add" state
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M7 18c-1.1 0-1.99.9-1.99 2S5.9 22 7 22s2-.9 2-2-.9-2-2-2zm10 0c-1.1 0-1.99.9-1.99 2s.89 2 1.99 2 2-.9 2-2-.9-2-2-2zm-2.2-5c.75 0 1.41-.41 1.75-1.03l3.58-6.49A1 1 0 0 0 19.24 4H5.21L4.27 2H1v2h2l3.6 7.59L5.24 14c-.16.28-.24.61-.24.96C5 16.1 5.9 17 7 17h12v-2H7.42c-.13 0-.25-.11-.25-.25l.03-.12L8.1 13h6.7z" />
+              </svg>
+            )}
+            <span>{isInCart ? "Added" : "Add"}</span>
           </button>
+
         </div>
       </div>
     </div>
@@ -143,27 +175,28 @@ function BookCard({ book, isInWishlist, onWishlistToggle }) {
 
 export default function EPustakalay() {
 
-const dispatch = useDispatch();
-const location = useLocation();
-const navigate = useNavigate();
-  
+  const dispatch = useDispatch();
+  const location = useLocation();
+  const navigate = useNavigate();
+
   const books = useSelector(
-      (state) => state.books.booksData || []
+    (state) => state.books.booksData || []
   );
-  
+
   const categories = useSelector(
     (state) => state.categories.categoriesData || []
   );
 
   const { wishlistData } = useSelector((state) => state.wishlist);
   const { isLoggedIn } = useSelector((state) => state.auth);
-  
+
   useEffect(() => {
-      dispatch(getAllBooks());
-      dispatch(getAllCategories());
-      if (isLoggedIn) {
-        dispatch(getAllWishlist());
-      }
+    dispatch(getAllBooks());
+    dispatch(getCart());
+    dispatch(getAllCategories());
+    if (isLoggedIn) {
+      dispatch(getAllWishlist());
+    }
   }, [dispatch, isLoggedIn]);
 
   const handleWishlistToggle = async (bookId) => {
@@ -185,9 +218,9 @@ const navigate = useNavigate();
 
 
   const maxPrice =
-  books.length > 0
-    ? Math.max(...books.map(book => book.price))
-    : 10000;
+    books.length > 0
+      ? Math.max(...books.map(book => book.price))
+      : 10000;
 
   const queryParams = new URLSearchParams(location.search);
   const urlCategory = queryParams.get("category");
@@ -245,7 +278,7 @@ const navigate = useNavigate();
 
   const filteredBooks = books.filter((book) => {
     const bookCategoryId = (book.category && typeof book.category === 'object') ? book.category._id : book.category;
-    
+
     const categoryMatch =
       checkedCategories.length === 0 ||
       checkedCategories.includes(bookCategoryId);
@@ -271,27 +304,27 @@ const navigate = useNavigate();
   });
 
 
-const sortedBooks = [...filteredBooks];
+  const sortedBooks = [...filteredBooks];
 
-switch (sortBy) {
-  case "Price: Low to High":
-    sortedBooks.sort((a, b) => a.price - b.price);
-    break;
+  switch (sortBy) {
+    case "Price: Low to High":
+      sortedBooks.sort((a, b) => a.price - b.price);
+      break;
 
-  case "Price: High to Low":
-    sortedBooks.sort((a, b) => b.price - a.price);
-    break;
+    case "Price: High to Low":
+      sortedBooks.sort((a, b) => b.price - a.price);
+      break;
 
-  case "Newest Arrivals":
-    sortedBooks.sort(
-      (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
-    );
-    break;
+    case "Newest Arrivals":
+      sortedBooks.sort(
+        (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+      );
+      break;
 
-  default:
-    break;
-}
-  
+    default:
+      break;
+  }
+
   return (
     <div
       className="min-h-screen"
@@ -307,7 +340,7 @@ switch (sortBy) {
         input[type=range]::-webkit-slider-thumb { cursor: pointer; }
       `}</style>
 
-       
+
       <div className="flex min-h-screen">
         {/* Sidebar */}
         <aside
@@ -337,7 +370,7 @@ switch (sortBy) {
                 style={{ color: colors.primary }}
               >
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M4 8h4V4H4v4zm6 12h4v-4h-4v4zm-6 0h4v-4H4v4zm0-6h4v-4H4v4zm6 0h4v-4h-4v4zm6-10v4h4V4h-4zm-6 4h4V4h-4v4zm6 6h4v-4h-4v4zm0 6h4v-4h-4v4z"/>
+                  <path d="M4 8h4V4H4v4zm6 12h4v-4h-4v4zm-6 0h4v-4H4v4zm0-6h4v-4H4v4zm6 0h4v-4h-4v4zm6-10v4h4V4h-4zm-6 4h4V4h-4v4zm6 6h4v-4h-4v4zm0 6h4v-4h-4v4z" />
                 </svg>
                 <span className="font-bold text-sm">Categories</span>
               </div>
@@ -371,7 +404,7 @@ switch (sortBy) {
                       >
                         {isChecked && (
                           <svg width="10" height="10" viewBox="0 0 10 10" fill="white">
-                            <path d="M1.5 5L4 7.5L8.5 2.5" stroke="white" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+                            <path d="M1.5 5L4 7.5L8.5 2.5" stroke="white" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
                           </svg>
                         )}
                       </div>
@@ -389,7 +422,7 @@ switch (sortBy) {
                 style={{ color: colors.primary }}
               >
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M21.41 11.58l-9-9C12.05 2.22 11.55 2 11 2H4c-1.1 0-2 .9-2 2v7c0 .55.22 1.05.59 1.42l9 9c.36.36.86.58 1.41.58s1.05-.22 1.41-.59l7-7c.37-.36.59-.86.59-1.41s-.23-1.06-.59-1.42zM5.5 7C4.67 7 4 6.33 4 5.5S4.67 4 5.5 4 7 4.67 7 5.5 6.33 7 5.5 7z"/>
+                  <path d="M21.41 11.58l-9-9C12.05 2.22 11.55 2 11 2H4c-1.1 0-2 .9-2 2v7c0 .55.22 1.05.59 1.42l9 9c.36.36.86.58 1.41.58s1.05-.22 1.41-.59l7-7c.37-.36.59-.86.59-1.41s-.23-1.06-.59-1.42zM5.5 7C4.67 7 4 6.33 4 5.5S4.67 4 5.5 4 7 4.67 7 5.5 6.33 7 5.5 7z" />
                 </svg>
                 <span className="font-bold text-sm">Price Range</span>
               </div>
@@ -422,7 +455,7 @@ switch (sortBy) {
                 style={{ color: colors.primary }}
               >
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zm6.93 6h-2.95c-.32-1.25-.78-2.45-1.38-3.56 1.84.63 3.37 1.91 4.33 3.56zM12 4.04c.83 1.2 1.48 2.53 1.91 3.96h-3.82c.43-1.43 1.08-2.76 1.91-3.96zM4.26 14C4.1 13.36 4 12.69 4 12s.1-1.36.26-2h3.38c-.08.66-.14 1.32-.14 2s.06 1.34.14 2H4.26zm.82 2h2.95c.32 1.25.78 2.45 1.38 3.56-1.84-.63-3.37-1.9-4.33-3.56zm2.95-8H5.08c.96-1.66 2.49-2.93 4.33-3.56C8.81 5.55 8.35 6.75 8.03 8zM12 19.96c-.83-1.2-1.48-2.53-1.91-3.96h3.82c-.43 1.43-1.08 2.76-1.91 3.96zM14.34 14H9.66c-.09-.66-.16-1.32-.16-2s.07-1.35.16-2h4.68c.09.65.16 1.32.16 2s-.07 1.34-.16 2zm.25 5.56c.6-1.11 1.06-2.31 1.38-3.56h2.95c-.96 1.65-2.49 2.93-4.33 3.56zM16.36 14c.08-.66.14-1.32.14-2s-.06-1.34-.14-2h3.38c.16.64.26 1.31.26 2s-.1 1.36-.26 2h-3.38z"/>
+                  <path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zm6.93 6h-2.95c-.32-1.25-.78-2.45-1.38-3.56 1.84.63 3.37 1.91 4.33 3.56zM12 4.04c.83 1.2 1.48 2.53 1.91 3.96h-3.82c.43-1.43 1.08-2.76 1.91-3.96zM4.26 14C4.1 13.36 4 12.69 4 12s.1-1.36.26-2h3.38c-.08.66-.14 1.32-.14 2s.06 1.34.14 2H4.26zm.82 2h2.95c.32 1.25.78 2.45 1.38 3.56-1.84-.63-3.37-1.9-4.33-3.56zm2.95-8H5.08c.96-1.66 2.49-2.93 4.33-3.56C8.81 5.55 8.35 6.75 8.03 8zM12 19.96c-.83-1.2-1.48-2.53-1.91-3.96h3.82c-.43 1.43-1.08 2.76-1.91 3.96zM14.34 14H9.66c-.09-.66-.16-1.32-.16-2s.07-1.35.16-2h4.68c.09.65.16 1.32.16 2s-.07 1.34-.16 2zm.25 5.56c.6-1.11 1.06-2.31 1.38-3.56h2.95c-.96 1.65-2.49 2.93-4.33 3.56zM16.36 14c.08-.66.14-1.32.14-2s-.06-1.34-.14-2h3.38c.16.64.26 1.31.26 2s-.1 1.36-.26 2h-3.38z" />
                 </svg>
                 <span className="font-bold text-sm">Languages</span>
               </div>
@@ -430,17 +463,17 @@ switch (sortBy) {
                 {languages.map((lang) => (
                   <button
                     key={lang}
-                    onClick={() => setActiveLanguage(lang==="All" ? "":lang)}
+                    onClick={() => setActiveLanguage(lang === "All" ? "" : lang)}
                     className="px-3 py-1 rounded-full text-xs font-semibold transition-colors duration-150"
                     style={{
                       background:
-                      (lang === "All" && activeLanguage === "")||
-                        activeLanguage === lang
+                        (lang === "All" && activeLanguage === "") ||
+                          activeLanguage === lang
                           ? colors.primary
                           : colors.surfaceContainerHigh,
                       color:
                         (lang === "All" && activeLanguage === "") ||
-                        activeLanguage === lang
+                          activeLanguage === lang
                           ? colors.onPrimary
                           : colors.onSurface,
                     }}
@@ -520,19 +553,19 @@ switch (sortBy) {
           </div>
 
           {/* Books Grid */}
-           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 max-w-9xl mx-auto ">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 max-w-9xl mx-auto ">
             {sortedBooks.map((book) => (
-              <BookCard 
-                key={book._id} 
-                book={book} 
+              <BookCard
+                key={book._id}
+                book={book}
                 isInWishlist={isBookInWishlist(book._id)}
                 onWishlistToggle={handleWishlistToggle}
               />
             ))}
-          </div> 
+          </div>
 
 
-            
+
           {/* Load More */}
           <div className="mt-16 flex justify-center">
             <button
@@ -551,15 +584,14 @@ switch (sortBy) {
             >
               View More Archive Items
               <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M16.59 8.59L12 13.17 7.41 8.59 6 10l6 6 6-6-1.41-1.41z"/>
+                <path d="M16.59 8.59L12 13.17 7.41 8.59 6 10l6 6 6-6-1.41-1.41z" />
               </svg>
             </button>
           </div>
         </main>
       </div>
 
-     
+
     </div>
   );
 }
-   

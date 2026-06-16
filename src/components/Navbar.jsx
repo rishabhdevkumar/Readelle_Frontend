@@ -87,8 +87,12 @@ export default function Navbar() {
             />
 
           </div>
-
-          <ShoppingCart size={18} />
+          <NavLink 
+          to="/carts"
+          aria-label="View shopping cart"
+          >
+             <ShoppingCart size={18} />
+          </NavLink>
           {/* <User size={18} /> */}
 
           {isLoggedIn ? (
