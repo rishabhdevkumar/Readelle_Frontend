@@ -150,11 +150,11 @@ const metaItems = [
 
       
       {/* MAIN */}
-      <main style={{ maxWidth: 1280, margin: "0 auto", padding: "128px 32px 96px" }}>
+      <main style={{ maxWidth: 1280, margin: "0 auto", padding: "100px 16px 64px" }} className="md:px-8 md:pt-32 md:pb-24">
         {/* Book Detail Grid */}
-        <div style={{ display: "grid", gridTemplateColumns: "5fr 7fr", gap: 64, alignItems: "start" }}>
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 md:gap-12 lg:gap-16 items-start">
           {/* Left: Cover */}
-          <div style={{ position: "relative" }}>
+          <div className="lg:col-span-5" style={{ position: "relative" }}>
             <div
               className="cover-hover"
               style={{
@@ -170,140 +170,145 @@ const metaItems = [
             </div>
             {/* Badge */}
             <div style={{
-              position: "absolute", top: 20, left: 20,
+              position: "absolute", top: 12, left: 12,
               background: "rgba(255,255,255,0.2)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)",
-              padding: "8px 16px", borderRadius: 9999, border: "1px solid rgba(255,255,255,0.3)",
-              color: "white", fontSize: 11, fontWeight: 700, letterSpacing: 2, textTransform: "uppercase",
+              padding: "6px 12px", borderRadius: 9999, border: "1px solid rgba(255,255,255,0.3)",
+              color: "white", fontSize: 10, fontWeight: 700, letterSpacing: 2, textTransform: "uppercase",
             }}
-              className="font-headline">
+              className="font-headline md:top-5 md:left-5 md:text-[11px] md:px-4 md:py-2">
               Modern Classic
             </div>
           </div>
 
           {/* Right: Details */}
-          <div style={{ display: "flex", flexDirection: "column", gap: 32 }}>
+          <div className="lg:col-span-7" style={{ display: "flex", flexDirection: "column", gap: 24 }} className="md:gap-8">
             {/* Title & Author */}
-            <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-              <h1 className="font-headline" style={{ fontSize: 52, fontWeight: 800, color: colors.primary, letterSpacing: "-2px", lineHeight: 1.05, margin: 0 }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 12 }} className="md:gap-4">
+              <h1 className="font-headline" style={{ fontSize: 32, fontWeight: 800, color: colors.primary, letterSpacing: "-1px", lineHeight: 1.05, margin: 0 }} className="md:text-5xl lg:text-[52px] md:tracking-[-2px]">
                 {book.title}
               </h1>
-              <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-                <span style={{ fontSize: 18, color: colors.onSurfaceVariant, fontWeight: 500 }}> {book.author} </span>
+              <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }} className="md:gap-4">
+                <span style={{ fontSize: 15, color: colors.onSurfaceVariant, fontWeight: 500 }} className="md:text-lg"> {book.author} </span>
                 <span style={{ width: 6, height: 6, borderRadius: "50%", background: colors.outlineVariant, display: "inline-block" }} />
                 <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                  <StarIcon filled size={16} />
-                  <span style={{ fontWeight: 700, fontSize: 15 }}>4.8</span>
-                  <span style={{ color: colors.onSurfaceVariant, fontSize: 14 }}>(1,240 reviews)</span>
+                  <StarIcon filled size={14} />
+                  <span style={{ fontWeight: 700, fontSize: 14 }} className="md:text-[15px]">4.8</span>
+                  <span style={{ color: colors.onSurfaceVariant, fontSize: 13 }} className="md:text-sm">(1,240 reviews)</span>
                 </div>
               </div>
             </div>
 
             {/* Price */}
-            <div className="font-headline" style={{ fontSize: 38, fontWeight: 800, color: colors.primaryContainer }}>
+            <div className="font-headline" style={{ fontSize: 32, fontWeight: 800, color: colors.primaryContainer }} className="md:text-[38px]">
              ₹{book.price}
             </div>
 
             {/* Synopsis */}
-            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-              <h3 className="font-headline" style={{ fontSize: 11, fontWeight: 700, letterSpacing: 3, textTransform: "uppercase", color: colors.onSurfaceVariant, margin: 0 }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }} className="md:gap-3">
+              <h3 className="font-headline" style={{ fontSize: 10, fontWeight: 700, letterSpacing: 3, textTransform: "uppercase", color: colors.onSurfaceVariant, margin: 0 }} className="md:text-[11px]">
                 Synopsis
               </h3>
-              <p style={{ fontSize: 17, lineHeight: 1.75, color: `${colors.onSurface}cc`, maxWidth: 560, margin: 0 }}>
+              <p style={{ fontSize: 15, lineHeight: 1.75, color: `${colors.onSurface}cc`, maxWidth: 560, margin: 0 }} className="md:text-[17px]">
                 {book.description}
               </p>
             </div>
 
             {/* Meta Bento */}
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 10 }} className="sm:grid-cols-4 md:gap-3">
               {metaItems.map(({ label, value }) => (
-                <div key={label} style={{ background: colors.surfaceContainerLow, padding: "16px", borderRadius: 10 }}>
-                  <span style={{ display: "block", fontSize: 10, letterSpacing: 2, textTransform: "uppercase", color: colors.onSurfaceVariant, marginBottom: 4 }}>{label}</span>
-                  <span style={{ fontWeight: 700, fontSize: 15 }}>{value}</span>
+                <div key={label} style={{ background: colors.surfaceContainerLow, padding: "12px", borderRadius: 10 }} className="md:p-4">
+                  <span style={{ display: "block", fontSize: 9, letterSpacing: 2, textTransform: "uppercase", color: colors.onSurfaceVariant, marginBottom: 4 }} className="md:text-[10px]">{label}</span>
+                  <span style={{ fontWeight: 700, fontSize: 13 }} className="md:text-[15px]">{value}</span>
                 </div>
               ))}
             </div>
 
             {/* Actions */}
-            <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
+            <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }} className="md:gap-4">
               <button
                 className="book-gradient btn-scale font-headline"
                 onClick={handleCart}
                 style={{
-                  color: "white", padding: "16px 36px", borderRadius: 10, fontWeight: 700, fontSize: 15,
-                  border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: 10,
-                  boxShadow: "0 8px 24px rgba(0,38,41,0.25)", transition: "box-shadow 0.2s",
+                  color: "white", padding: "14px 28px", borderRadius: 10, fontWeight: 700, fontSize: 14,
+                  border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: 8,
+                  boxShadow: "0 8px 24px rgba(0,38,41,0.25)", transition: "box-shadow 0.2s", flex: 1,
+                  justifyContent: "center",
                 }}
               >
-                <CartIcon size={20} />
-                {cartAdded ? "Added!" : "Add to Cart"}
+                <CartIcon size={18} />
+                <span className="hidden sm:inline">{cartAdded ? "Added!" : "Add to Cart"}</span>
+                <span className="sm:hidden">{cartAdded ? "Added!" : "Add"}</span>
               </button>
               <button
                 className="btn-scale font-headline"
                 onClick={() => setWishlisted(!wishlisted)}
                 style={{
                   background: colors.surfaceContainerHighest, color: colors.primary,
-                  padding: "16px 36px", borderRadius: 10, fontWeight: 700, fontSize: 15,
-                  border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: 10,
-                  transition: "background 0.15s",
+                  padding: "14px 28px", borderRadius: 10, fontWeight: 700, fontSize: 14,
+                  border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: 8,
+                  transition: "background 0.15s", flex: 1, justifyContent: "center",
                 }}
               >
-                <HeartIcon size={20} />
-                {wishlisted ? "Wishlisted ✓" : "Add to Wishlist"}
+                <HeartIcon size={18} />
+                <span className="hidden sm:inline">{wishlisted ? "Wishlisted ✓" : "Add to Wishlist"}</span>
+                <span className="sm:hidden">{wishlisted ? "Saved" : "Save"}</span>
               </button>
             </div>
           </div>
         </div>
 
         {/* Reviews Section */}
-        <section style={{ marginTop: 96 }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 48 }}>
+        <section style={{ marginTop: 64 }} className="md:mt-24">
+          <div style={{ display: "flex", flexDirection: "column", gap: 16, marginBottom: 32 }} className="sm:flex-row sm:justify-between sm:items-end md:mb-12">
             <div>
-              <h2 className="font-headline" style={{ fontSize: 36, fontWeight: 800, color: colors.primary, margin: "0 0 6px 0" }}>
+              <h2 className="font-headline" style={{ fontSize: 28, fontWeight: 800, color: colors.primary, margin: "0 0 6px 0" }} className="md:text-4xl">
                 Reader Reviews
               </h2>
-              <p style={{ color: colors.onSurfaceVariant, margin: 0 }}>Hear from our community of book lovers.</p>
+              <p style={{ color: colors.onSurfaceVariant, margin: 0, fontSize: 14 }} className="md:text-base">Hear from our community of book lovers.</p>
             </div>
             <button
               className="review-btn font-headline"
               style={{
                 background: "transparent", border: "none", cursor: "pointer", color: colors.primary,
-                fontWeight: 700, fontSize: 15, display: "flex", alignItems: "center", gap: 8,
+                fontWeight: 700, fontSize: 14, display: "flex", alignItems: "center", gap: 6,
               }}
+              className="md:text-[15px] md:gap-2"
             >
               Write a Review
-              <span className="review-arrow"><ArrowRightIcon /></span>
+              <span className="review-arrow"><ArrowRightIcon size={16} /></span>
             </button>
           </div>
 
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 28 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 20 }} className="sm:grid-cols-2 lg:grid-cols-3 md:gap-7">
             {reviews.map((r, i) => (
               <div
                 key={i}
                 style={{
-                  background: colors.surfaceContainerLowest, padding: 32, borderRadius: 14,
+                  background: colors.surfaceContainerLowest, padding: 24, borderRadius: 14,
                   boxShadow: "0 2px 8px rgba(0,0,0,0.06)", border: `1px solid ${colors.outlineVariant}20`,
-                  display: "flex", flexDirection: "column", justifyContent: "space-between", gap: 20,
+                  display: "flex", flexDirection: "column", justifyContent: "space-between", gap: 16,
                 }}
+                className="md:p-8 md:gap-5"
               >
                 <div>
-                  <div style={{ display: "flex", gap: 2, marginBottom: 16 }}>
-                    {[...Array(5)].map((_, s) => <StarIcon key={s} filled={s < r.stars} size={17} />)}
+                  <div style={{ display: "flex", gap: 2, marginBottom: 12 }} className="md:mb-4">
+                    {[...Array(5)].map((_, s) => <StarIcon key={s} filled={s < r.stars} size={15} />)}
                   </div>
-                  <p style={{ color: `${colors.onSurface}e8`, fontStyle: "italic", lineHeight: 1.7, margin: 0 }}>
+                  <p style={{ color: `${colors.onSurface}e8`, fontStyle: "italic", lineHeight: 1.7, margin: 0, fontSize: 14 }} className="md:text-base">
                     "{r.text}"
                   </p>
                 </div>
-                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 10 }} className="md:gap-3">
                   <div style={{
-                    width: 40, height: 40, borderRadius: "50%",
+                    width: 36, height: 36, borderRadius: "50%",
                     background: `${colors.primaryContainer}18`, color: colors.primary,
                     display: "flex", alignItems: "center", justifyContent: "center",
-                    fontWeight: 700, fontSize: 13,
+                    fontWeight: 700, fontSize: 12,
                   }}
-                    className="font-headline">{r.initials}</div>
+                    className="font-headline md:w-10 md:h-10 md:text-[13px]">{r.initials}</div>
                   <div>
-                    <p style={{ fontWeight: 700, fontSize: 14, margin: 0 }}>{r.name}</p>
-                    <p style={{ fontSize: 12, color: colors.onSurfaceVariant, margin: 0 }}>{r.label}</p>
+                    <p style={{ fontWeight: 700, fontSize: 13, margin: 0 }} className="md:text-sm">{r.name}</p>
+                    <p style={{ fontSize: 11, color: colors.onSurfaceVariant, margin: 0 }} className="md:text-xs">{r.label}</p>
                   </div>
                 </div>
               </div>

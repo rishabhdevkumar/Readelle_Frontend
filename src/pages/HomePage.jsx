@@ -131,8 +131,8 @@ function BookCard({ book, isInWishlist, onWishlistToggle }) {
   };
 
   return (
-    <div className="group bg-white p-6 rounded-xl hover:shadow-2xl hover:shadow-black/5 transition-all duration-300 hover:-translate-y-2 relative">
-      <div className="aspect-[3/4] rounded-lg overflow-hidden mb-6 shadow-md bg-[#ebeef4] relative">
+    <div className="group bg-white p-4 md:p-6 rounded-xl hover:shadow-2xl hover:shadow-black/5 transition-all duration-300 hover:-translate-y-2 relative">
+      <div className="aspect-[3/4] rounded-lg overflow-hidden mb-4 md:mb-6 shadow-md bg-[#ebeef4] relative">
         <img
           src={book.img}
           alt={book.title}
@@ -143,13 +143,13 @@ function BookCard({ book, isInWishlist, onWishlistToggle }) {
         <button
           onClick={handleWishlistClick}
           disabled={isTogglingWishlist}
-          className="absolute top-3 right-3 w-9 h-9 rounded-full backdrop-blur-md flex items-center justify-center transition-all duration-200 active:scale-95 z-10"
+          className="absolute top-2 md:top-3 right-2 md:right-3 w-8 h-8 md:w-9 md:h-9 rounded-full backdrop-blur-md flex items-center justify-center transition-all duration-200 active:scale-95 z-10"
           style={{
             background: isInWishlist ? '#002629' : 'rgba(255, 255, 255, 0.9)',
             color: isInWishlist ? '#ffffff' : '#002629',
           }}
         >
-          <svg width="18" height="18" viewBox="0 0 24 24" fill={isInWishlist ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill={isInWishlist ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
           </svg>
         </button>
@@ -158,11 +158,11 @@ function BookCard({ book, isInWishlist, onWishlistToggle }) {
         <span className="text-[10px] uppercase font-bold tracking-widest text-[#083d41]">
           {book.category}
         </span>
-        <h3 className="text-lg font-bold text-[#181c20] leading-tight line-clamp-1">{book.title}</h3>
-        <p className="text-sm text-[#404849] font-medium truncate">{book.author}</p>
-        <div className="pt-4 flex items-center justify-between">
-          <span className="text-lg font-bold text-[#002629]">{book.price}</span>
-          <button className="w-10 h-10 rounded-full bg-[#002629] text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
+        <h3 className="text-base md:text-lg font-bold text-[#181c20] leading-tight line-clamp-1">{book.title}</h3>
+        <p className="text-xs md:text-sm text-[#404849] font-medium truncate">{book.author}</p>
+        <div className="pt-3 md:pt-4 flex items-center justify-between">
+          <span className="text-base md:text-lg font-bold text-[#002629]">{book.price}</span>
+          <button className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-[#002629] text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
             <CartIcon />
           </button>
         </div>
@@ -176,7 +176,7 @@ function BentoCard({ img, name, desc, overlay, showDesc, navigate, categoryId })
     <div
       onClick={() => navigate && categoryId ? navigate(`/books?category=${categoryId}`) : navigate && navigate("/books")}
       className="group relative overflow-hidden rounded-xl bg-[#111] cursor-pointer w-full h-full"
-      style={{ minHeight: "100%" }}
+      style={{ minHeight: "250px" }}
     >
       <img
         src={img}
@@ -184,12 +184,12 @@ function BentoCard({ img, name, desc, overlay, showDesc, navigate, categoryId })
         className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
       />
       <div className={`absolute inset-0 bg-gradient-to-t ${overlay} to-transparent`} />
-      <div className="absolute bottom-0 p-5 md:p-6">
-        <h3 className="text-xl font-bold text-white mb-1">{name}</h3>
+      <div className="absolute bottom-0 p-4 md:p-5 lg:p-6">
+        <h3 className="text-lg md:text-xl font-bold text-white mb-1">{name}</h3>
         {showDesc && desc && (
-          <p className="text-white/80 text-sm mb-3">{desc}</p>
+          <p className="text-white/80 text-xs md:text-sm mb-2 md:mb-3 hidden sm:block">{desc}</p>
         )}
-        <button className="text-white text-xs font-bold uppercase tracking-widest flex items-center gap-2 hover:underline cursor-pointer">
+        <button className="text-white text-[10px] md:text-xs font-bold uppercase tracking-widest flex items-center gap-2 hover:underline cursor-pointer">
           View Category <NorthEastIcon />
         </button>
       </div>
@@ -290,19 +290,26 @@ export default function HomePage() {
         .hp-body     { font-family: 'Inter', sans-serif; }
         .bento-grid  {
           display: grid;
-          gap: 1.5rem;
+          gap: 1rem;
           grid-template-columns: 1fr;
           grid-template-rows: auto;
           min-height: 500px;
         }
+        @media (min-width: 640px) {
+          .bento-grid {
+            gap: 1.25rem;
+            grid-template-rows: repeat(4, 220px);
+          }
+        }
         @media (min-width: 768px) {
           .bento-grid {
+            gap: 1.5rem;
             grid-template-columns: repeat(3, 1fr);
             grid-template-rows: repeat(2, 260px);
           }
           .bento-fiction     { grid-column: 1 / 3; grid-row: 1 / 3; }
           .bento-academic    { grid-column: 3 / 4; grid-row: 1 / 2; }
-          .bento-programming { grid-column: 3 / 4; grid-row: 2 / 3; } /* was missing — swap with philosophy */
+          .bento-programming { grid-column: 3 / 4; grid-row: 2 / 3; }
         }
         @media (min-width: 1024px) {
           .bento-grid {
@@ -319,31 +326,31 @@ export default function HomePage() {
       <div className="hp-body bg-[#f7f9ff] text-[#181c20]">
 
         {/* ── Hero ── */}
-        <section className="relative min-h-[820px] flex items-center px-6 md:px-12 max-w-screen-2xl mx-auto overflow-hidden">
-          <div className="grid lg:grid-cols-2 gap-12 items-center w-full py-20 lg:py-0">
+        <section className="relative min-h-[600px] md:min-h-[820px] flex items-center px-4 md:px-6 lg:px-12 max-w-screen-2xl mx-auto overflow-hidden">
+          <div className="grid lg:grid-cols-2 gap-8 md:gap-12 items-center w-full py-16 md:py-20 lg:py-0">
 
             {/* Left */}
-            <div className="z-10 space-y-8">
+            <div className="z-10 space-y-4 md:space-y-8">
               <span className="text-[#c99577] font-semibold tracking-widest text-xs uppercase hp-headline">
                 The Digital Curator
               </span>
-              <h1 className="hp-headline text-6xl xl:text-7xl font-extrabold tracking-tight text-[#002629] leading-[1.08]">
+              <h1 className="hp-headline text-4xl md:text-5xl xl:text-7xl font-extrabold tracking-tight text-[#002629] leading-[1.08]">
                 Read, Discover,<br />
                 <span className="bg-gradient-to-r from-[#002629] to-[#083d41] bg-clip-text text-transparent">
                   Learn Every Day.
                 </span>
               </h1>
-              <p className="text-xl text-[#404849] leading-relaxed max-w-lg font-light">
+              <p className="text-base md:text-xl text-[#404849] leading-relaxed max-w-lg font-light">
                 Experience literature through a sophisticated lens. ePustakalay curates the world's most influential texts into a focused digital environment.
               </p>
-              <div className="flex items-center gap-6 pt-2">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 md:gap-6 pt-2">
                 <Link
                   to="/books"
-                  className="px-8 py-4 bg-gradient-to-br from-[#002629] to-[#083d41] text-white font-semibold rounded-xl hover:shadow-xl hover:shadow-[#002629]/20 transition-all active:scale-95 no-underline"
+                  className="px-6 md:px-8 py-3 md:py-4 bg-gradient-to-br from-[#002629] to-[#083d41] text-white font-semibold rounded-xl hover:shadow-xl hover:shadow-[#002629]/20 transition-all active:scale-95 no-underline text-center w-full sm:w-auto"
                 >
                   Explore Books
                 </Link>
-                <button className="flex items-center gap-2 text-[#002629] font-bold group/btn hover:gap-3 transition-all cursor-pointer">
+                <button className="flex items-center gap-2 text-[#002629] font-bold group/btn hover:gap-3 transition-all cursor-pointer text-sm md:text-base">
                   Our Library Philosophy
                   <span className="group-hover/btn:translate-x-1 transition-transform">
                     <ArrowForwardIcon />
@@ -353,7 +360,7 @@ export default function HomePage() {
             </div>
 
             {/* Right — hero image */}
-            <div className="relative xl:h-[600px] hidden lg:block">
+            <div className="relative h-[300px] md:h-[400px] xl:h-[600px] hidden lg:block">
               <div className="absolute inset-0 bg-[#e5e8ee] rounded-4xl rotate-3"></div>
               <img
                 src="https://lh3.googleusercontent.com/aida-public/AB6AXuCiJXHShr7dXIMwT7fsFt_Jjl_WeG7yXhzSS-KTx3HtHe4391t2IFMgxFDbIkgn2B-p_w1a22wTGxSQMPRK8kxaGJQzzLYs4IllU65e_ULFtnCX06WTioDPQdqaihReDlEsG0CB0ZwmzzR11Z7I4jnLq4k5DS9xfQu-7Fj45y5lX3EXjpznhyYvkHwgxrewIYm_ZsVEtRemyHpxK2hVSwb98acNxjkVcsChZdZcijRvxPWlHKyi93sT0LLpsw8l413jWClh5K3Mdg"
@@ -375,14 +382,14 @@ export default function HomePage() {
         </section>
 
         {/* ── Browse Collections (Bento Grid) ── */}
-        <section className="bg-[#f1f4fa] py-24 px-6 md:px-12">
+        <section className="bg-[#f1f4fa] py-12 md:py-24 px-4 md:px-6 lg:px-12">
           <div className="max-w-screen-2xl mx-auto">
-            <div className="flex justify-between items-end mb-16">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-8 md:mb-16 gap-4">
               <div>
-                <h2 className="hp-headline text-4xl font-bold tracking-tight text-[#002629]">
+                <h2 className="hp-headline text-3xl md:text-4xl font-bold tracking-tight text-[#002629]">
                   Browse Collections
                 </h2>
-                <p className="text-[#404849] mt-2">Curated categories for every intellectual pursuit.</p>
+                <p className="text-[#404849] mt-2 text-sm md:text-base">Curated categories for every intellectual pursuit.</p>
               </div>
             </div>
 
@@ -440,9 +447,9 @@ export default function HomePage() {
         </section>
 
         {/* ── Featured Arrivals ── */}
-        <section className="py-24 px-6 md:px-12 max-w-screen-2xl mx-auto">
-          <div className="flex items-center justify-between mb-12">
-            <h2 className="hp-headline text-4xl font-bold tracking-tight text-[#002629]">
+        <section className="py-12 md:py-24 px-4 md:px-6 lg:px-12 max-w-screen-2xl mx-auto">
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-8 md:mb-12 gap-4">
+            <h2 className="hp-headline text-3xl md:text-4xl font-bold tracking-tight text-[#002629]">
               Featured Arrivals
             </h2>
             <div className="flex gap-3">
@@ -454,7 +461,7 @@ export default function HomePage() {
               </button>
             </div>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
             {displayBooks.map((book) => (
               <BookCard 
                 key={book.id} 
@@ -467,8 +474,8 @@ export default function HomePage() {
         </section>
 
         {/* ── Newsletter ── */}
-        <section className="py-12 px-6 md:px-12 max-w-screen-2xl mx-auto">
-          <div className="bg-[#002629] rounded-[2.5rem] p-10 lg:p-20 relative overflow-hidden">
+        <section className="py-8 md:py-12 px-4 md:px-6 lg:px-12 max-w-screen-2xl mx-auto">
+          <div className="bg-[#002629] rounded-2xl md:rounded-[2.5rem] p-6 md:p-10 lg:p-20 relative overflow-hidden">
             {/* decorative svg */}
             <div className="absolute top-0 right-0 w-1/2 h-full opacity-20 pointer-events-none">
               <svg className="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
@@ -476,10 +483,10 @@ export default function HomePage() {
               </svg>
             </div>
             <div className="relative z-10 max-w-2xl">
-              <h2 className="hp-headline text-4xl lg:text-5xl font-bold text-white tracking-tight leading-tight mb-6">
+              <h2 className="hp-headline text-2xl md:text-4xl lg:text-5xl font-bold text-white tracking-tight leading-tight mb-4 md:mb-6">
                 Refine Your Reading Experience
               </h2>
-              <p className="text-[#7aa8ac] text-xl mb-10 font-light">
+              <p className="text-[#7aa8ac] text-base md:text-xl mb-6 md:mb-10 font-light">
                 Join 50,000+ readers who receive our curated weekend reading digest and early access to rare digital collections.
               </p>
               <form onSubmit={handleNewsletterSubmit} className="flex flex-col sm:flex-row gap-4">
@@ -488,11 +495,11 @@ export default function HomePage() {
                   placeholder="Your academic email"
                   value={newsletterEmail}
                   onChange={(e) => setNewsletterEmail(e.target.value)}
-                  className="flex-grow bg-white/10 border-none rounded-xl px-6 py-4 text-white placeholder:text-white/40 focus:ring-2 focus:ring-[#7aa8ac] outline-none backdrop-blur-md"
+                  className="flex-grow bg-white/10 border-none rounded-xl px-4 md:px-6 py-3 md:py-4 text-white placeholder:text-white/40 focus:ring-2 focus:ring-[#7aa8ac] outline-none backdrop-blur-md"
                 />
                 <button
                   type="submit"
-                  className="px-8 py-4 bg-white text-[#002629] font-bold rounded-xl hover:bg-[#7aa8ac] transition-colors whitespace-nowrap cursor-pointer"
+                  className="px-6 md:px-8 py-3 md:py-4 bg-white text-[#002629] font-bold rounded-xl hover:bg-[#7aa8ac] transition-colors whitespace-nowrap cursor-pointer"
                 >
                   Subscribe
                 </button>

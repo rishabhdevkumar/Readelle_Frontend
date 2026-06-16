@@ -68,7 +68,7 @@ function BookCard({ book, isInWishlist, onWishlistToggle }) {
 
   return (
     <div
-      className="flex flex-col rounded-xl overflow-hidden transition-all duration-300 relative"
+      className="flex flex-col rounded-xl overflow-hidden transition-all duration-300 relative cursor-pointer"
       onClick={() => navigate(`/books/${book._id}`)}
       style={{
         background: colors.surfaceContainerLowest,
@@ -103,7 +103,7 @@ function BookCard({ book, isInWishlist, onWishlistToggle }) {
         <button
           onClick={handleWishlistClick}
           disabled={isTogglingWishlist}
-          className="absolute top-3 right-3 w-9 h-9 rounded-full backdrop-blur-md flex items-center justify-center transition-all duration-200 active:scale-95 z-10"
+          className="absolute top-2 md:top-3 right-2 md:right-3 w-8 h-8 md:w-9 md:h-9 rounded-full backdrop-blur-md flex items-center justify-center transition-all duration-200 active:scale-95 z-10"
           style={{
             background: isInWishlist ? colors.primary : 'rgba(255, 255, 255, 0.9)',
             color: isInWishlist ? colors.onPrimary : colors.primary,
@@ -114,7 +114,7 @@ function BookCard({ book, isInWishlist, onWishlistToggle }) {
           </svg>
         </button>
       </div>
-      <div className="px-4 pb-6 flex-1 flex flex-col">
+      <div className="px-3 md:px-4 pb-4 md:pb-6 flex-1 flex flex-col">
         <span
           className="text-xs font-bold uppercase tracking-widest mb-1"
           style={{ color: `${colors.onSurfaceVariant}99`, fontSize: "10px", letterSpacing: "0.2em" }}
@@ -122,7 +122,7 @@ function BookCard({ book, isInWishlist, onWishlistToggle }) {
           {book.genre}
         </span>
         <h3
-          className="font-bold text-lg leading-snug mb-1 transition-colors duration-200"
+          className="font-bold text-sm md:text-lg leading-snug mb-1 transition-colors duration-200 line-clamp-2"
           style={{
             fontFamily: "Manrope, sans-serif",
             color: hovered ? colors.surfaceTint : colors.primary,
@@ -130,12 +130,12 @@ function BookCard({ book, isInWishlist, onWishlistToggle }) {
         >
           {book.title}
         </h3>
-        <p className="text-sm mb-4" style={{ color: colors.onSurfaceVariant }}>
+        <p className="text-xs md:text-sm mb-3 md:mb-4 truncate" style={{ color: colors.onSurfaceVariant }}>
           {book.author}
         </p>
         <div className="mt-auto flex items-center justify-between">
           <span
-            className="text-xl font-black"
+            className="text-lg md:text-xl font-black"
             style={{ fontFamily: "Manrope, sans-serif", color: colors.primary }}
           >
             {book.price}
@@ -338,13 +338,26 @@ export default function EPustakalay() {
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #c0c8c9; border-radius: 10px; }
         input[type=range] { accent-color: #002629; }
         input[type=range]::-webkit-slider-thumb { cursor: pointer; }
+        @keyframes slideIn {
+          from {
+            transform: translateX(-100%);
+            opacity: 0;
+          }
+          to {
+            transform: translateX(0);
+            opacity: 1;
+          }
+        }
+        .animate-slideIn {
+          animation: slideIn 0.3s ease-out;
+        }
       `}</style>
 
 
       <div className="flex min-h-screen">
         {/* Sidebar */}
         <aside
-          className="hidden md:block flex-col sticky left-0 top-0 pt-24 w-56 h-screen z-40 p-6 gap-4"
+          className="hidden md:flex md:flex-col sticky left-0 top-0 pt-24 w-56 h-screen z-40 p-6 gap-4"
           style={{ background: colors.surfaceContainerLow }}
         >
           <div className="mb-2">
@@ -486,17 +499,19 @@ export default function EPustakalay() {
           </div>
 
           <button
-            className="w-full py-3 font-bold rounded-xl text-sm transition-colors duration-200 mt-2"
+            className="w-full py-3 font-bold rounded-xl text-sm transition-all duration-200 mt-4 shadow-sm"
             style={{
-              background: colors.surfaceContainerHigh,
-              color: colors.primary,
+              background: colors.primary,
+              color: colors.onPrimary,
             }}
-            onMouseEnter={(e) =>
-              (e.currentTarget.style.background = colors.surfaceContainerHighest)
-            }
-            onMouseLeave={(e) =>
-              (e.currentTarget.style.background = colors.surfaceContainerHigh)
-            }
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = colors.primaryContainer;
+              e.currentTarget.style.transform = "scale(1.02)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = colors.primary;
+              e.currentTarget.style.transform = "scale(1)";
+            }}
             onClick={() => {
               setCheckedCategories([]);
               setActiveLanguage("");
@@ -504,43 +519,61 @@ export default function EPustakalay() {
               navigate("/books");
             }}
           >
-            Reset All
+            Reset All Filters
           </button>
         </aside>
 
         {/* Main */}
-        <main className="flex-1 p-8 pt-22">
+        <main className="flex-1 p-4 md:p-6 lg:p-8 pt-20 md:pt-22">
           {/* Header */}
-          <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 md:gap-6 mb-8 md:mb-12">
             <div className="max-w-xl">
               <h1
-                className="text-2xl font-extrabold tracking-tight leading-tight"
+                className="text-xl md:text-2xl font-extrabold tracking-tight leading-tight"
                 style={{ fontFamily: "Manrope, sans-serif", color: colors.primary }}
               >
                 Curated Archive
               </h1>
-              <p className="mt-2 font-medium" style={{ color: colors.onSurfaceVariant }}>
+              <p className="mt-2 font-medium text-sm md:text-base" style={{ color: colors.onSurfaceVariant }}>
                 Discover 12,408 hand-selected literary artifacts ready for your digital shelf.
               </p>
             </div>
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-3">
+              {/* Mobile Filter Button */}
+              <button
+                onClick={() => setShowMobileFilters(true)}
+                className="md:hidden flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold"
+                style={{
+                  background: colors.surfaceContainerLow,
+                  border: `1px solid ${colors.outlineVariant}33`,
+                  color: colors.primary,
+                }}
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <line x1="4" y1="6" x2="20" y2="6" />
+                  <line x1="4" y1="12" x2="20" y2="12" />
+                  <line x1="4" y1="18" x2="20" y2="18" />
+                </svg>
+                Filters
+              </button>
+
               <div
-                className="flex items-center px-4 py-2 rounded-xl"
+                className="flex items-center px-3 md:px-4 py-2 rounded-xl w-full md:w-auto"
                 style={{
                   background: colors.surfaceContainerLow,
                   border: `1px solid ${colors.outlineVariant}33`,
                 }}
               >
                 <span
-                  className="text-xs font-bold uppercase tracking-widest mr-3"
+                  className="text-[10px] md:text-xs font-bold uppercase tracking-widest mr-2 md:mr-3"
                   style={{ color: colors.onSurfaceVariant }}
                 >
-                  Sort by
+                  Sort
                 </span>
                 <select
                   value={sortBy}
                   onChange={(e) => setSortBy(e.target.value)}
-                  className="bg-transparent border-none text-sm font-semibold focus:outline-none cursor-pointer"
+                  className="bg-transparent border-none text-xs md:text-sm font-semibold focus:outline-none cursor-pointer flex-1"
                   style={{ color: colors.primary }}
                 >
                   <option value="Popularity" >Popularity</option>
@@ -567,9 +600,9 @@ export default function EPustakalay() {
 
 
           {/* Load More */}
-          <div className="mt-16 flex justify-center">
+          <div className="mt-12 md:mt-16 flex justify-center">
             <button
-              className="px-8 py-4 font-bold rounded-full flex items-center gap-3 transition-colors duration-200 text-sm"
+              className="px-6 md:px-8 py-3 md:py-4 font-bold rounded-full flex items-center gap-2 md:gap-3 transition-colors duration-200 text-xs md:text-sm"
               style={{
                 background: colors.surfaceContainerLow,
                 border: `1px solid ${colors.outlineVariant}1a`,
