@@ -4,7 +4,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { useLocation, useNavigate } from "react-router-dom";
 import { getAllBooks } from "../redux/slices/bookSlice";
 import { getAllCategories } from "../redux/slices/categorySlice";
-import { addToCart, getCart } from "../redux/slices/cartSlice";
+import { addToCart, getCart, addToGuestCart, setGuestCart } from "../redux/slices/cartSlice";
 import { toggleWishlist, getAllWishlist } from "../redux/slices/wishlistSlice";
 import toast from "react-hot-toast";
 
@@ -37,6 +37,7 @@ function BookCard({ book, isInWishlist, onWishlistToggle }) {
   const [isTogglingWishlist, setIsTogglingWishlist] = useState(false);
   const dispatch = useDispatch();
 
+  const { isLoggedIn } = useSelector((state) => state.auth);
 
   const cartItem = useSelector(
     (state) => state.cart.cartData || []
@@ -44,16 +45,19 @@ function BookCard({ book, isInWishlist, onWishlistToggle }) {
 
 
   const isInCart = cartItem.some(
-    (item) => item?.book?._id === book._id
+    (item) => (item?.book?._id || item?.book) === book._id
   );
 
   const handleAdd = async (e) => {
     e.stopPropagation();
 
-    await dispatch(addToCart(book._id));
-    await dispatch(getCart());
+    if (isLoggedIn) {
+      await dispatch(addToCart(book._id));
+      await dispatch(getCart());
+    } else {
+      dispatch(addToGuestCart(book));
+    }
     toast.success("Added to cart!");
-
   };
 
 
@@ -192,10 +196,19 @@ export default function EPustakalay() {
 
   useEffect(() => {
     dispatch(getAllBooks());
-    dispatch(getCart());
     dispatch(getAllCategories());
     if (isLoggedIn) {
+      dispatch(getCart());
       dispatch(getAllWishlist());
+    } else {
+      const guestCart = localStorage.getItem("guest_cart");
+      if (guestCart) {
+        try {
+          dispatch(setGuestCart(JSON.parse(guestCart)));
+        } catch (err) {
+          console.error(err);
+        }
+      }
     }
   }, [dispatch, isLoggedIn]);
 

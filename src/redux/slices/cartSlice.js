@@ -82,7 +82,58 @@ export const removeCartItem = createAsyncThunk(
 const cartSlice = createSlice({
   name: "cart",
   initialState,
-  reducers: {},
+  reducers: {
+    setGuestCart: (state, action) => {
+      state.cartData = action.payload || [];
+      state.totalAmount = state.cartData.reduce((sum, item) => {
+        const price = item.book?.price || 0;
+        return sum + (price * (item.quantity || 1));
+      }, 0);
+    },
+    addToGuestCart: (state, action) => {
+      const book = action.payload;
+      const exists = state.cartData.some(item => {
+        const id = item.book && typeof item.book === 'object' ? item.book._id : item.book;
+        return id === book._id;
+      });
+      if (!exists) {
+        state.cartData.push({
+          _id: `guest_${Date.now()}_${Math.random()}`,
+          cartItemId: `guest_${Date.now()}`,
+          book: book,
+          quantity: 1
+        });
+        state.totalAmount = state.cartData.reduce((sum, item) => {
+          const price = item.book?.price || 0;
+          return sum + (price * (item.quantity || 1));
+        }, 0);
+        localStorage.setItem("guest_cart", JSON.stringify(state.cartData));
+      }
+    },
+    removeFromGuestCart: (state, action) => {
+      const cartItemId = action.payload;
+      state.cartData = state.cartData.filter(item => item.cartItemId !== cartItemId);
+      state.totalAmount = state.cartData.reduce((sum, item) => {
+        const price = item.book?.price || 0;
+        return sum + (price * (item.quantity || 1));
+      }, 0);
+      localStorage.setItem("guest_cart", JSON.stringify(state.cartData));
+    },
+    updateGuestCartQty: (state, action) => {
+      const { cartItemId, quantity } = action.payload;
+      state.cartData = state.cartData.map(item => {
+        if (item.cartItemId === cartItemId) {
+          return { ...item, quantity };
+        }
+        return item;
+      });
+      state.totalAmount = state.cartData.reduce((sum, item) => {
+        const price = item.book?.price || 0;
+        return sum + (price * (item.quantity || 1));
+      }, 0);
+      localStorage.setItem("guest_cart", JSON.stringify(state.cartData));
+    }
+  },
 
   extraReducers: (builder) => {
     builder
@@ -125,5 +176,12 @@ const cartSlice = createSlice({
       });
   },
 });
+
+export const {
+  setGuestCart,
+  addToGuestCart,
+  removeFromGuestCart,
+  updateGuestCartQty
+} = cartSlice.actions;
 
 export default cartSlice.reducer;

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { getAllBooks } from "../redux/slices/bookSlice";
 
 const colors = {
@@ -60,6 +60,13 @@ const ArrowRightIcon = ({ size = 18 }) => (
   </svg>
 );
 
+const BookOpenIcon = ({ size = 20 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
+    <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
+  </svg>
+);
+
 const ShareIcon = ({ size = 18 }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <circle cx="18" cy="5" r="3" /><circle cx="6" cy="12" r="3" /><circle cx="18" cy="19" r="3" />
@@ -102,6 +109,7 @@ const navLinks = ["Home", "Books", "Wishlist"];
 
 export default function BookdetailPage() {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   const [activeNav, setActiveNav] = useState("Books");
   const [cartAdded, setCartAdded] = useState(false);
   const [wishlisted, setWishlisted] = useState(false);
@@ -180,6 +188,7 @@ const metaItems = [
         .footer-social:hover { background: #002629; color: white; }
         .footer-social { transition: all 0.2s; }
         .search-input:focus { outline: none; box-shadow: 0 0 0 2px #002629; }
+        .read-now-btn:hover { box-shadow: 0 12px 36px rgba(26,107,112,0.5) !important; transform: translateY(-1px); }
       `}</style>
 
       
@@ -288,6 +297,33 @@ const metaItems = [
                 <span className="sm:hidden">{wishlisted ? "Saved" : "Save"}</span>
               </button>
             </div>
+
+            {/* Read Now Button */}
+            <button
+              className="btn-scale font-headline read-now-btn"
+              onClick={() => navigate(`/books/${id}/chapters`)}
+              style={{
+                background: "linear-gradient(135deg, #1a6b70 0%, #0d4a4e 100%)",
+                color: "white",
+                padding: "16px 32px",
+                borderRadius: 12,
+                fontWeight: 700,
+                fontSize: 15,
+                border: "none",
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 10,
+                width: "100%",
+                boxShadow: "0 8px 28px rgba(26,107,112,0.35)",
+                transition: "box-shadow 0.2s, transform 0.15s",
+                letterSpacing: "0.5px",
+              }}
+            >
+              <BookOpenIcon size={20} />
+              <span>Read Now</span>
+            </button>
           </div>
         </div>
 

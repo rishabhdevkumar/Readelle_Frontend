@@ -1,7 +1,8 @@
 import { Routes, Route } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
 import { useEffect } from "react";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
+import { getCart, setGuestCart } from "./redux/slices/cartSlice";
 
 import HomePage from "./pages/HomePage";
 import LoginPage from "./pages/auth/Login";
@@ -19,9 +20,11 @@ import CartPage from "./pages/CartPage";
 import WishlistPage from "./pages/WishlistPage";
 import MyAccount from "./pages/MyAccount";
 import { getMe, setAuthCheckComplete } from "./redux/slices/authSlice";
+import ChapterPage from "./pages/ChapterPage";
 
 function App() {
   const dispatch = useDispatch();
+  const { isLoggedIn, isCheckingAuth } = useSelector((state) => state.auth);
 
   // Restore auth state on app mount if token exists
   useEffect(() => {
@@ -33,6 +36,24 @@ function App() {
       dispatch(setAuthCheckComplete());
     }
   }, [dispatch]);
+
+  // Load cart once auth check is complete
+  useEffect(() => {
+    if (!isCheckingAuth) {
+      if (isLoggedIn) {
+        dispatch(getCart());
+      } else {
+        const guestCart = localStorage.getItem("guest_cart");
+        if (guestCart) {
+          try {
+            dispatch(setGuestCart(JSON.parse(guestCart)));
+          } catch (e) {
+            console.error(e);
+          }
+        }
+      }
+    }
+  }, [dispatch, isLoggedIn, isCheckingAuth]);
 
   return (
     <>
@@ -55,6 +76,13 @@ function App() {
          element={
          <PublicLayout><BookdetailPage /></PublicLayout>
          } 
+         />
+
+         <Route
+           path="/books/:id/chapters"
+           element={
+             <PublicLayout><ChapterPage /></PublicLayout>
+           }
          />
 
          <Route 

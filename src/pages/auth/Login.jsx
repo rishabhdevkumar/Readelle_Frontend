@@ -1,6 +1,6 @@
 
 import { useState, useCallback } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { loginUser, logout } from "../../redux/slices/authSlice";
 import { Eye, EyeOff } from "lucide-react";
@@ -15,6 +15,10 @@ const ROLE_ROUTES = {
 export default function LoginPage() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // If user was redirected here from a protected page, go back there after login
+  const fromPath = location.state?.from || null;
 
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -84,7 +88,8 @@ export default function LoginPage() {
         }
 
         const role = userData?.role || "user";
-        const destination = ROLE_ROUTES[role] ?? "/";
+        // If user came from a specific page (e.g. ChapterPage), return them there
+        const destination = fromPath || ROLE_ROUTES[role] || "/";
         navigate(destination, { replace: true });
 
       } else if (loginUser.rejected.match(result)) {

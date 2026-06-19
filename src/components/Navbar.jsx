@@ -15,6 +15,11 @@ export default function Navbar() {
     (state) => state.auth
   );
 
+  const cartItems = useSelector(
+    (state) => state.cart?.cartData || []
+  );
+  const cartCount = cartItems.reduce((acc, item) => acc + (item.quantity || 1), 0);
+
   const [localSearch, setLocalSearch] = useState("");
   const [showMobileSearch, setShowMobileSearch] = useState(false);
 
@@ -95,10 +100,26 @@ export default function Navbar() {
             />
           </div>
           <NavLink 
-          to="/carts"
-          aria-label="View shopping cart"
+            to="/carts"
+            aria-label="View shopping cart"
+            className="relative p-1"
           >
              <ShoppingCart size={18} />
+             {cartCount > 0 && (
+               <span 
+                 className="absolute -top-1.5 -right-1.5 bg-red-500 text-white rounded-full flex items-center justify-center font-extrabold"
+                 style={{
+                   fontSize: "9px",
+                   minWidth: "15px",
+                   height: "15px",
+                   padding: "0 3px",
+                   lineHeight: 1,
+                   border: "1.5px solid white"
+                 }}
+               >
+                 {cartCount}
+               </span>
+             )}
           </NavLink>
           {/* <User size={18} /> */}
 

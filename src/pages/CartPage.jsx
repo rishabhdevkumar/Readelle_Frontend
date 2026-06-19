@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
-import { getCart, updateCartItem, removeCartItem } from "../redux/slices/cartSlice";
+import { getCart, updateCartItem, removeCartItem, setGuestCart, updateGuestCartQty, removeFromGuestCart, addToGuestCart } from "../redux/slices/cartSlice";
 import { useDispatch } from "react-redux";
 
 // ─── Color tokens matching the ePustakalay design system ───────────────────
@@ -445,9 +445,22 @@ export default function CartPage() {
     (state) => state.cart.totalAmount || 0
   );
 
+  const { isLoggedIn } = useSelector((state) => state.auth);
+
   useEffect(() => {
-    dispatch(getCart());
-  }, [dispatch]);
+    if (isLoggedIn) {
+      dispatch(getCart());
+    } else {
+      const guestCart = localStorage.getItem("guest_cart");
+      if (guestCart) {
+        try {
+          dispatch(setGuestCart(JSON.parse(guestCart)));
+        } catch (e) {
+          console.error(e);
+        }
+      }
+    }
+  }, [dispatch, isLoggedIn]);
 
 
   const showToast = (msg) => {
@@ -456,18 +469,22 @@ export default function CartPage() {
   };
 
   const handleQtyChange = async (cartItemId, quantity) => {
-
-    await dispatch(updateCartItem({ cartItemId, quantity }));
-    dispatch(getCart());
+    if (isLoggedIn) {
+      await dispatch(updateCartItem({ cartItemId, quantity }));
+      dispatch(getCart());
+    } else {
+      dispatch(updateGuestCartQty({ cartItemId, quantity }));
+    }
   };
 
 
   const handleRemove = async (cartItemId) => {
-
-    await dispatch(removeCartItem(
-      cartItemId
-    ));
-    dispatch(getCart());
+    if (isLoggedIn) {
+      await dispatch(removeCartItem(cartItemId));
+      dispatch(getCart());
+    } else {
+      dispatch(removeFromGuestCart(cartItemId));
+    }
   };
 
   const handleApplyPromo = () => {
@@ -483,12 +500,21 @@ export default function CartPage() {
     }
   };
 
-  const handleAddRecommendation = (book) => {
-    setCart((prev) => {
-      const exists = prev.find((i) => i.id === book.id);
-      if (exists) return prev.map((i) => i.id === book.id ? { ...i, qty: i.qty + 1 } : i);
-      return [...prev, { ...book, qty: 1, stock: "In Stock" }];
-    });
+  const handleAddRecommendation = async (book) => {
+    const bookObj = {
+      _id: book._id || book.id || `rec_${Date.now()}`,
+      title: book.title,
+      author: book.author,
+      price: book.price,
+      cover_image: book.cover
+    };
+
+    if (isLoggedIn) {
+      await dispatch(addToCart(bookObj._id));
+      dispatch(getCart());
+    } else {
+      dispatch(addToGuestCart(bookObj));
+    }
     showToast(`"${book.title}" added to your bag!`);
   };
 
@@ -521,9 +547,9 @@ export default function CartPage() {
             Your Library Bag
           </h1>
           <p className="mt-2 font-medium" style={{ color: colors.onSurfaceVariant }}>
-            {cart.length === 0
+            {Items.length === 0
               ? "Your bag is empty — explore titles below."
-              : `You have ${cart.length} premium title${cart.length > 1 ? "s" : ""} reserved in your cart.`}
+              : `You have ${Items.length} premium title${Items.length > 1 ? "s" : ""} reserved in your cart.`}
           </p>
         </div>
 
@@ -558,7 +584,7 @@ export default function CartPage() {
           {/* Order Summary */}
           <OrderSummary
             subtotal={subtotal}
-            cartCount={cart.length}
+            cartCount={Items.length}
             promoCode={promoCode}
             setPromoCode={setPromoCode}
             onApplyPromo={handleApplyPromo}
