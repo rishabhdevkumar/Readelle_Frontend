@@ -1,24 +1,21 @@
 import { useState, useEffect } from "react";
-import { Search, ShoppingCart, User, X } from "lucide-react";
+import { Search, ShoppingCart, X } from "lucide-react";
 import { useSelector, useDispatch } from "react-redux";
 import { NavLink, useNavigate, useLocation } from "react-router-dom";
 import { logout } from "../redux/slices/authSlice";
 import logo from "../assets/ePustakalayNewLogo.png";
-
 
 export default function Navbar() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const location = useLocation();
 
-  const { isLoggedIn, data } = useSelector(
-    (state) => state.auth
-  );
-
-  const cartItems = useSelector(
-    (state) => state.cart?.cartData || []
-  );
+  const { isLoggedIn } = useSelector((state) => state.auth);
+  const cartItems = useSelector((state) => state.cart?.cartData || []);
   const cartCount = cartItems.reduce((acc, item) => acc + (item.quantity || 1), 0);
+  
+  const wishlistItems = useSelector((state) => state.wishlist?.wishlistData || []);
+  const wishlistCount = wishlistItems.length;
 
   const [localSearch, setLocalSearch] = useState("");
   const [showMobileSearch, setShowMobileSearch] = useState(false);
@@ -47,23 +44,11 @@ export default function Navbar() {
     dispatch(logout());
   };
 
-  const handleCart = () => {
-    // Cart functionality placeholder
-    alert("Cart feature coming soon!");
-  };
-
-
-  const cartItems = useSelector(
-    (state) => state.cart.cartData || []
-  );
-
-  const cartCount = cartItems.reduce((total, item) => total + (item.quantity || 1), 0);
-
-
   const linkStyles = ({ isActive }) =>
-    `transition-all duration-200 relative pb-1 ${isActive
-      ? "text-[#002629] after:w-full"
-      : "text-slate-500 hover:text-[#002629] after:w-0"
+    `transition-all duration-200 relative pb-1 ${
+      isActive
+        ? "text-[#002629] after:w-full"
+        : "text-slate-500 hover:text-[#002629] after:w-0"
     } after:content-[""] after:absolute after:bottom-0 after:left-0 after:h-[2px] after:bg-[#002629] after:transition-all after:duration-200`;
 
   return (
@@ -80,58 +65,36 @@ export default function Navbar() {
             </NavLink>
 
             <div className="hidden lg:flex gap-8 items-center text-base">
-
-        <div className="flex items-center gap-3 md:gap-6 py-5">
-          {/* Desktop Search */}
-          <div className="hidden lg:flex items-center bg-slate-200/50 rounded-lg px-3 py-2 w-64">
-            <Search size={16} className="text-gray-400" />
-            <input
-              type="text"
-              placeholder="Search the collection..."
-              value={localSearch}
-              onChange={handleSearchChange}
-              className="bg-transparent outline-none ml-2 text-sm w-full"
-            />
-          </div>
-          <NavLink 
-            to="/carts"
-            aria-label="View shopping cart"
-            className="relative p-1"
-          >
-             <ShoppingCart size={18} />
-             {cartCount > 0 && (
-               <span 
-                 className="absolute -top-1.5 -right-1.5 bg-red-500 text-white rounded-full flex items-center justify-center font-extrabold"
-                 style={{
-                   fontSize: "9px",
-                   minWidth: "15px",
-                   height: "15px",
-                   padding: "0 3px",
-                   lineHeight: 1,
-                   border: "1.5px solid white"
-                 }}
-               >
-                 {cartCount}
-               </span>
-             )}
-          </NavLink>
-          {/* <User size={18} /> */}
-
-          {isLoggedIn ? (
-            <div className="hidden md:flex items-center gap-3">
-              <NavLink
-                to="/my-account"
-                className="px-4 py-2 border rounded-md text-[#002629] border-[#002629] hover:bg-slate-100 font-semibold transition-all duration-200"
-              >
-                My Account
+              <NavLink to="/" className={linkStyles}>
+                Home
               </NavLink>
               <NavLink to="/books" className={linkStyles}>
                 Books
               </NavLink>
-              <NavLink to="/wishlist" className={linkStyles}> {/* Added proper /wishlist path */}
-                Wishlist
+              <NavLink to="/wishlist" className="relative">
+                {({ isActive }) => (
+                  <>
+                    <span className={linkStyles({ isActive })}>
+                      Wishlist
+                    </span>
+                    {wishlistCount > 0 && (
+                      <span
+                        className="absolute -top-2 -right-3 bg-[#002629] text-white rounded-full inline-flex items-center justify-center font-extrabold"
+                        style={{
+                          fontSize: "9px",
+                          minWidth: "16px",
+                          height: "16px",
+                          padding: "0 4px",
+                          lineHeight: 1,
+                          border: "1.5px solid white",
+                        }}
+                      >
+                        {wishlistCount}
+                      </span>
+                    )}
+                  </>
+                )}
               </NavLink>
-
             </div>
           </div>
 
@@ -147,25 +110,39 @@ export default function Navbar() {
                 className="bg-transparent outline-none ml-2 text-sm w-full"
               />
             </div>
+
+            {/* Mobile Search Icon */}
+            <button
+              onClick={() => setShowMobileSearch(true)}
+              className="lg:hidden p-2 hover:bg-slate-200 rounded-lg transition-colors"
+              aria-label="Search"
+            >
+              <Search size={20} className="text-slate-600" />
+            </button>
+
+            {/* Cart Icon */}
             <NavLink
               to="/carts"
               aria-label="View shopping cart"
+              className="relative p-2 hover:bg-slate-200 rounded-lg transition-colors"
             >
-
-              <div className="relative inline-flex items-center justify-center">
-
-                <ShoppingCart size={18} />
-
-                {cartCount > 0 && (
-                  /* 2. Styled with absolute positioning, small sizes, and black circle classes */
-                  <span className="absolute -top-1.5 -right-2 bg-black text-white text-[9px] font-bold w-3.5 height-3.5 h-3.5 flex items-center justify-center rounded-full ring-1 ring-white">
-                    {cartCount}
-                  </span>
-                )}
-
-              </div>
+              <ShoppingCart size={20} className="text-slate-600" />
+              {cartCount > 0 && (
+                <span
+                  className="absolute -top-1 -right-1 bg-[#002629] text-white rounded-full flex items-center justify-center font-extrabold"
+                  style={{
+                    fontSize: "9px",
+                    minWidth: "16px",
+                    height: "16px",
+                    padding: "0 4px",
+                    lineHeight: 1,
+                    border: "1.5px solid white",
+                  }}
+                >
+                  {cartCount}
+                </span>
+              )}
             </NavLink>
-            {/* <User size={18} /> */}
 
             {isLoggedIn ? (
               <div className="hidden md:flex items-center gap-3">
@@ -183,13 +160,13 @@ export default function Navbar() {
                 </button>
               </div>
             ) : (
-              <NavLink to="/login"
+              <NavLink
+                to="/login"
                 className="px-4 py-2 border rounded-md font-semibold text-[#002629] border-[#002629] hover:bg-slate-100 transition-all duration-200"
               >
                 Login
               </NavLink>
             )}
-
           </div>
         </nav>
       </header>
@@ -206,7 +183,7 @@ export default function Navbar() {
           >
             <div className="flex items-center gap-3 max-w-2xl mx-auto">
               <div className="flex-1 flex items-center bg-slate-100 rounded-lg px-4 py-3">
-                <Search size={18} className="text-gray-400 flex-shrink-0" />
+                <Search size={18} className="text-gray-400 shrink-0" />
                 <input
                   type="text"
                   placeholder="Search books, authors, categories..."
@@ -228,21 +205,21 @@ export default function Navbar() {
         </div>
       )}
 
-      <style jsx>{`
-      @keyframes slideDown {
-        from {
-          transform: translateY(-100%);
-          opacity: 0;
+      <style>{`
+        @keyframes slideDown {
+          from {
+            transform: translateY(-100%);
+            opacity: 0;
+          }
+          to {
+            transform: translateY(0);
+            opacity: 1;
+          }
         }
-        to {
-          transform: translateY(0);
-          opacity: 1;
+        .animate-slideDown {
+          animation: slideDown 0.3s ease-out;
         }
-      }
-      .animate-slideDown {
-        animation: slideDown 0.3s ease-out;
-      }
-    `}</style>
+      `}</style>
     </>
   );
 }

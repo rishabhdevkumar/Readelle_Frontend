@@ -247,6 +247,7 @@ export default function EPustakalay() {
   const [priceRange, setPriceRange] = useState(5000);
   const [sortBy, setSortBy] = useState("Popularity");
   const [searchTerm, setSearchTerm] = useState("");
+  const [showMobileFilters, setShowMobileFilters] = useState(false);
 
   // Sync category filter whenever URL search params change
   useEffect(() => {
@@ -367,10 +368,10 @@ export default function EPustakalay() {
       `}</style>
 
 
-      <div className="flex min-h-screen">
+      <div className="flex min-h-screen w-full">
         {/* Sidebar */}
         <aside
-          className="hidden md:flex md:flex-col sticky left-0 top-0 pt-24 w-56 h-screen z-40 p-6 gap-4"
+          className="hidden md:flex md:flex-col sticky left-0 top-0 pt-24 w-56 min-w-[14rem] max-w-[14rem] h-screen z-40 p-6 gap-4 overflow-y-auto"
           style={{ background: colors.surfaceContainerLow }}
         >
           <div className="mb-2">
@@ -537,20 +538,23 @@ export default function EPustakalay() {
         </aside>
 
         {/* Main */}
-        <main className="flex-1 p-4 md:p-6 lg:p-8 pt-24 md:pt-28">
+        <main className="flex-1 min-w-0 p-4 md:p-6 lg:p-8" style={{ background: "#f7f9ff", paddingTop: "100px" }}>
           {/* Header */}
-          <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 md:gap-6 mb-8 md:mb-12">
-            <div className="max-w-xl">
+          <div className="flex flex-col gap-4 mb-8 md:mb-12 w-full">
+            {/* Title */}
+            <div className="w-full bg-white p-4 rounded-lg shadow-sm">
               <h1
-                className="text-xl md:text-2xl font-extrabold tracking-tight leading-tight"
-                style={{ fontFamily: "Manrope, sans-serif", color: colors.primary }}
+                className="text-2xl md:text-3xl font-extrabold tracking-tight leading-tight mb-2"
+                style={{ fontFamily: "Manrope, sans-serif", color: "#002629" }}
               >
                 Curated Archive
               </h1>
-              <p className="mt-2 font-medium text-sm md:text-base" style={{ color: colors.onSurfaceVariant }}>
+              <p className="font-medium text-sm md:text-base" style={{ color: "#64748b" }}>
                 Discover 12,408 hand-selected literary artifacts ready for your digital shelf.
               </p>
             </div>
+
+            {/* Filters and Sort Row */}
             <div className="flex items-center gap-3">
               {/* Mobile Filter Button */}
               <button
@@ -570,15 +574,16 @@ export default function EPustakalay() {
                 Filters
               </button>
 
+              {/* Sort Dropdown */}
               <div
-                className="flex items-center px-3 md:px-4 py-2 rounded-xl w-full md:w-auto"
+                className="flex items-center px-3 md:px-4 py-2 rounded-xl"
                 style={{
                   background: colors.surfaceContainerLow,
                   border: `1px solid ${colors.outlineVariant}33`,
                 }}
               >
                 <span
-                  className="text-[10px] md:text-xs font-bold uppercase tracking-widest mr-2 md:mr-3"
+                  className="text-xs font-bold uppercase tracking-widest mr-3"
                   style={{ color: colors.onSurfaceVariant }}
                 >
                   Sort
@@ -586,7 +591,7 @@ export default function EPustakalay() {
                 <select
                   value={sortBy}
                   onChange={(e) => setSortBy(e.target.value)}
-                  className="bg-transparent border-none text-xs md:text-sm font-semibold focus:outline-none cursor-pointer flex-1"
+                  className="bg-transparent border-none text-sm font-semibold focus:outline-none cursor-pointer"
                   style={{ color: colors.primary }}
                 >
                   <option value="Popularity" >Popularity</option>
@@ -637,6 +642,191 @@ export default function EPustakalay() {
         </main>
       </div>
 
+      {/* Mobile Filter Sidebar Overlay */}
+      {showMobileFilters && (
+        <>
+          {/* Backdrop */}
+          <div
+            className="fixed inset-0 bg-black/50 z-50 md:hidden"
+            onClick={() => setShowMobileFilters(false)}
+          />
+
+          {/* Sidebar */}
+          <aside
+            className="fixed left-0 top-0 bottom-0 w-72 h-screen z-50 p-6 overflow-y-auto custom-scrollbar pb-24 animate-slideIn md:hidden"
+            style={{ background: colors.surfaceContainerLowest }}
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h2
+                  className="font-bold text-lg"
+                  style={{ fontFamily: "Manrope, sans-serif", color: colors.primary }}
+                >
+                  Library Filters
+                </h2>
+                <p
+                  className="text-xs uppercase tracking-widest mt-1"
+                  style={{ color: colors.onSurfaceVariant }}
+                >
+                  Refine Curator View
+                </p>
+              </div>
+              <button
+                onClick={() => setShowMobileFilters(false)}
+                className="w-8 h-8 flex items-center justify-center rounded-full"
+                style={{ background: colors.surfaceContainerHigh }}
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <line x1="18" y1="6" x2="6" y2="18" />
+                  <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+              </button>
+            </div>
+
+            <div className="flex flex-col gap-8">
+              {/* Categories */}
+              <section>
+                <div
+                  className="flex items-center gap-2 mb-4"
+                  style={{ color: colors.primary }}
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M4 8h4V4H4v4zm6 12h4v-4h-4v4zm-6 0h4v-4H4v4zm0-6h4v-4H4v4zm6 0h4v-4h-4v4zm6-10v4h4V4h-4zm-6 4h4V4h-4v4zm6 6h4v-4h-4v4zm0 6h4v-4h-4v4z" />
+                  </svg>
+                  <span className="font-bold text-sm">Categories</span>
+                </div>
+                <div className="flex flex-col gap-2">
+                  {categories.map((cat) => {
+                    const isChecked = checkedCategories.includes(cat._id);
+                    return (
+                      <label
+                        key={cat._id}
+                        onClick={() => toggleCategory(cat._id)}
+                        className="flex items-center gap-3 p-2 rounded-lg cursor-pointer transition-all duration-150"
+                        style={{
+                          background: isChecked
+                            ? colors.surfaceContainerLow
+                            : "transparent",
+                          color: isChecked ? colors.primary : colors.onSurfaceVariant,
+                          fontWeight: isChecked ? 700 : 400,
+                          boxShadow: isChecked
+                            ? "0 1px 4px rgba(0,38,41,0.06)"
+                            : "none",
+                        }}
+                      >
+                        <div
+                          className="w-4 h-4 rounded flex items-center justify-center shrink-0"
+                          style={{
+                            background: isChecked ? colors.primary : "transparent",
+                            border: isChecked
+                              ? `2px solid ${colors.primary}`
+                              : `2px solid ${colors.outlineVariant}`,
+                          }}
+                        >
+                          {isChecked && (
+                            <svg width="10" height="10" viewBox="0 0 10 10" fill="white">
+                              <path d="M1.5 5L4 7.5L8.5 2.5" stroke="white" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+                            </svg>
+                          )}
+                        </div>
+                        <span className="text-sm">{cat.category_name}</span>
+                      </label>
+                    );
+                  })}
+                </div>
+              </section>
+
+              {/* Price Range */}
+              <section>
+                <div
+                  className="flex items-center gap-2 mb-4"
+                  style={{ color: colors.primary }}
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M21.41 11.58l-9-9C12.05 2.22 11.55 2 11 2H4c-1.1 0-2 .9-2 2v7c0 .55.22 1.05.59 1.42l9 9c.36.36.86.58 1.41.58s1.05-.22 1.41-.59l7-7c.37-.36.59-.86.59-1.41s-.23-1.06-.59-1.42zM5.5 7C4.67 7 4 6.33 4 5.5S4.67 4 5.5 4 7 4.67 7 5.5 6.33 7 5.5 7z" />
+                  </svg>
+                  <span className="font-bold text-sm">Price Range</span>
+                </div>
+                <div className="px-2">
+                  <input
+                    type="range"
+                    min={0}
+                    max={5000}
+                    value={priceRange}
+                    onChange={(e) => setPriceRange(Number(e.target.value))}
+                    className="w-full h-1 rounded-lg appearance-none cursor-pointer"
+                    style={{ background: colors.surfaceContainerHighest }}
+                  />
+                  <div
+                    className="flex justify-between mt-2 text-xs font-medium"
+                    style={{ color: colors.onSurfaceVariant }}
+                  >
+                    <span>₹0</span>
+                    <span className="font-bold" style={{ color: colors.primary }}>
+                      ₹{priceRange}
+                    </span>
+                  </div>
+                </div>
+              </section>
+
+              {/* Languages */}
+              <section>
+                <div
+                  className="flex items-center gap-2 mb-4"
+                  style={{ color: colors.primary }}
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zm6.93 6h-2.95c-.32-1.25-.78-2.45-1.38-3.56 1.84.63 3.37 1.91 4.33 3.56zM12 4.04c.83 1.2 1.48 2.53 1.91 3.96h-3.82c.43-1.43 1.08-2.76 1.91-3.96zM4.26 14C4.1 13.36 4 12.69 4 12s.1-1.36.26-2h3.38c-.08.66-.14 1.32-.14 2s.06 1.34.14 2H4.26zm.82 2h2.95c.32 1.25.78 2.45 1.38 3.56-1.84-.63-3.37-1.9-4.33-3.56zm2.95-8H5.08c.96-1.66 2.49-2.93 4.33-3.56C8.81 5.55 8.35 6.75 8.03 8zM12 19.96c-.83-1.2-1.48-2.53-1.91-3.96h3.82c-.43 1.43-1.08 2.76-1.91 3.96zM14.34 14H9.66c-.09-.66-.16-1.32-.16-2s.07-1.35.16-2h4.68c.09.65.16 1.32.16 2s-.07 1.34-.16 2zm.25 5.56c.6-1.11 1.06-2.31 1.38-3.56h2.95c-.96 1.65-2.49 2.93-4.33 3.56zM16.36 14c.08-.66.14-1.32.14-2s-.06-1.34-.14-2h3.38c.16.64.26 1.31.26 2s-.1 1.36-.26 2h-3.38z" />
+                  </svg>
+                  <span className="font-bold text-sm">Languages</span>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {languages.map((lang) => (
+                    <button
+                      key={lang}
+                      onClick={() => setActiveLanguage(lang === "All" ? "" : lang)}
+                      className="px-3 py-1 rounded-full text-xs font-semibold transition-colors duration-150"
+                      style={{
+                        background:
+                          (lang === "All" && activeLanguage === "") ||
+                            activeLanguage === lang
+                            ? colors.primary
+                            : colors.surfaceContainerHigh,
+                        color:
+                          (lang === "All" && activeLanguage === "") ||
+                            activeLanguage === lang
+                            ? colors.onPrimary
+                            : colors.onSurface,
+                      }}
+                    >
+                      {lang}
+                    </button>
+                  ))}
+                </div>
+              </section>
+
+              {/* Reset Button */}
+              <button
+                className="w-full py-3 font-bold rounded-xl text-sm transition-all duration-200 shadow-sm"
+                style={{
+                  background: colors.primary,
+                  color: colors.onPrimary,
+                }}
+                onClick={() => {
+                  setCheckedCategories([]);
+                  setActiveLanguage("");
+                  setPriceRange(maxPrice);
+                  navigate("/books");
+                  setShowMobileFilters(false);
+                }}
+              >
+                Reset All Filters
+              </button>
+            </div>
+          </aside>
+        </>
+      )}
 
     </div>
   );
