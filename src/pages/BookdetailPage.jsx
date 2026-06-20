@@ -2,6 +2,10 @@ import { useState, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { useParams, useNavigate } from "react-router-dom";
 import { getAllBooks } from "../redux/slices/bookSlice";
+import { toggleWishlist,getAllWishlist } from "../redux/slices/wishlistSlice";
+import { getCart ,addToCart} from "../redux/slices/cartSlice";
+import { toast } from "react-hot-toast";
+
 
 const colors = {
   primary: "#002629",
@@ -114,17 +118,26 @@ export default function BookdetailPage() {
   const [cartAdded, setCartAdded] = useState(false);
   const [wishlisted, setWishlisted] = useState(false);
 
+
+  const authState = useSelector((state) => state.auth);
+  const isLoggedIn = authState?.isLoggedIn || false;
+
   const { id } = useParams();
 
   const books = useSelector((state) => state.books.booksData || []);
   const isLoading = useSelector((state) => state.books.isLoading);
+
 
   // Fetch books if not already loaded
   useEffect(() => {
     if (books.length === 0) {
       dispatch(getAllBooks());
     }
-  }, [dispatch, books.length]);
+    if (isLoggedIn) {
+      dispatch(getCart());
+      dispatch(getAllWishlist());
+    }
+  }, [dispatch, books.length, isLoggedIn]);
 
   const book = books.find((b) => b._id === id);
 
@@ -159,18 +172,78 @@ export default function BookdetailPage() {
   }
 
 
-  const handleCart = () => {
-    setCartAdded(true);
-    setTimeout(() => setCartAdded(false), 1800);
+
+
+  const metaItems = [
+    { label: "Format", value: "Hardcover" },
+    { label: "Pages", value: "180 pp." },
+    { label: "Language", value: book.language },
+    { label: "Published", value: "1925" },
+  ];
+
+
+  const { cartData } = useSelector((state) => state.cart);
+  const { wishlistData } = useSelector((state) => state.wishlist);
+
+  // 3. Determine if this specific book is already added to cart
+  const isAlreadyInCart = cartData.some((item) => {
+    const cartBookId = item.book && typeof item.book === "object" ? item.book._id : item.book;
+    return cartBookId === book?._id;
+  });
+
+  const isWishlisted = wishlistData.some((item) => {
+    const wishlistBookId = item.book && typeof item.book === "object" ? item.book._id : item.book;
+    return wishlistBookId === book?._id;
+  });
+
+  //  Handle Add to Cart Click
+  const handleCartClick = async () => {
+    if (!book?._id) return;
+
+    if (isAlreadyInCart) {
+      toast.error("Item is already in your cart");
+      return;
+    }
+
+    if (isLoggedIn) {
+      // Authenticated User: Dispatch the AsyncThunk API call
+      toast.promise(
+        dispatch(addToCart(book._id)).unwrap(),
+        {
+          loading: "Adding to cart...",
+          success: "Added to cart successfully!",
+          error: "Failed to add item to cart.",
+        }
+      );
+    } else {
+      // Guest User: Dispatch the synchronous guest reducer
+      dispatch(addToGuestCart(book));
+      toast.success("Added to guest cart!");
+    }
   };
 
-  
-const metaItems = [
-  { label: "Format", value: "Hardcover" },
-  { label: "Pages", value: "180 pp." },
-  { label: "Language", value: book.language },
-  { label: "Published", value: "1925" },
-];
+  // ❤️ Toggle Wishlist Trigger
+  const handleWishlistClick = () => {
+    if (!book?._id) return;
+
+    if (!isLoggedIn) {
+      toast.error("Please log in to save items to your wishlist");
+      return;
+    }
+
+    // Dispatches your exact thunk from wishlistSlice
+    dispatch(toggleWishlist(book._id));
+  };
+
+  // useEffect(() => {
+  //   if (books.length === 0) {
+  //     dispatch(getAllBooks());
+  //   }
+  //   if (isLoggedIn) {
+  //     dispatch(getCart());
+  //     dispatch(getAllWishlist());
+  //   }
+  // }, [dispatch, books.length, isLoggedIn]);
 
   return (
     <div style={{ background: colors.surface, color: colors.onSurface, fontFamily: "'Inter', sans-serif", minHeight: "100vh" }}>
@@ -191,7 +264,7 @@ const metaItems = [
         .read-now-btn:hover { box-shadow: 0 12px 36px rgba(26,107,112,0.5) !important; transform: translateY(-1px); }
       `}</style>
 
-      
+
       {/* MAIN */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 lg:px-12 pt-24 sm:pt-28 md:pt-32 pb-16 md:pb-20 lg:pb-24">
         {/* Book Detail Grid */}
@@ -243,7 +316,7 @@ const metaItems = [
 
             {/* Price */}
             <div className="font-headline md:text-[38px]" style={{ fontSize: 32, fontWeight: 800, color: colors.primaryContainer }}>
-             ₹{book.price}
+              ₹{book.price}
             </div>
 
             {/* Synopsis */}
@@ -270,7 +343,7 @@ const metaItems = [
             <div className="md:gap-4" style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
               <button
                 className="book-gradient btn-scale font-headline"
-                onClick={handleCart}
+                onClick={handleCartClick}
                 style={{
                   color: "white", padding: "14px 28px", borderRadius: 10, fontWeight: 700, fontSize: 14,
                   border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: 8,
@@ -279,12 +352,12 @@ const metaItems = [
                 }}
               >
                 <CartIcon size={18} />
-                <span className="hidden sm:inline">{cartAdded ? "Added!" : "Add to Cart"}</span>
-                <span className="sm:hidden">{cartAdded ? "Added!" : "Add"}</span>
+                <span className="hidden sm:inline">{isAlreadyInCart ? "Added!" : "Add to Cart"}</span>
+                <span className="sm:hidden">{isAlreadyInCart ? "Added!" : "Add"}</span>
               </button>
               <button
                 className="btn-scale font-headline"
-                onClick={() => setWishlisted(!wishlisted)}
+                onClick={handleWishlistClick}
                 style={{
                   background: colors.surfaceContainerHighest, color: colors.primary,
                   padding: "14px 28px", borderRadius: 10, fontWeight: 700, fontSize: 14,
@@ -293,8 +366,8 @@ const metaItems = [
                 }}
               >
                 <HeartIcon size={18} />
-                <span className="hidden sm:inline">{wishlisted ? "Wishlisted ✓" : "Add to Wishlist"}</span>
-                <span className="sm:hidden">{wishlisted ? "Saved" : "Save"}</span>
+                <span className="hidden sm:inline">{isWishlisted ? "Wishlisted ✓" : "Add to Wishlist"}</span>
+                <span className="sm:hidden">{isWishlisted ? "Saved" : "Save"}</span>
               </button>
             </div>
 
@@ -385,7 +458,7 @@ const metaItems = [
         </section>
       </main>
 
-      
+
     </div>
   );
 }
