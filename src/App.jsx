@@ -21,6 +21,7 @@ import WishlistPage from "./pages/WishlistPage";
 import MyAccount from "./pages/MyAccount";
 import { getMe, setAuthCheckComplete } from "./redux/slices/authSlice";
 import ChapterPage from "./pages/ChapterPage";
+import Notes from "./pages/Notes";
 import CheckoutPage from "./pages/CheckoutPage";
 import OrderSuccessPage from "./pages/OrderSuccessPage";
 
@@ -95,6 +96,42 @@ function App() {
             </PublicLayout>
           }
         />
+        
+        <Route path="/books/:id"
+         element={
+         <PublicLayout><BookdetailPage /></PublicLayout>
+         } 
+         />
+
+         <Route
+           path="/books/:id/chapters"
+           element={
+             <PublicLayout><ChapterPage /></PublicLayout>
+           }
+         />
+
+         <Route
+           path="/books/:id/chapters/:chapterId/notes"
+           element={
+             <ProtectedRoute allowedRoles={["user", "admin", "seller"]}>
+               <Notes />
+             </ProtectedRoute>
+           }
+         />
+
+         <Route 
+         path="/carts"
+         element={
+          <PublicLayout><CartPage /></PublicLayout>
+         } 
+         />
+
+        <Route 
+        path="/login" 
+        element={
+        <LoginPage />
+        }
+         />
 
         <Route
           path="/carts"
