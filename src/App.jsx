@@ -21,6 +21,7 @@ import WishlistPage from "./pages/WishlistPage";
 import MyAccount from "./pages/MyAccount";
 import { getMe, setAuthCheckComplete } from "./redux/slices/authSlice";
 import ChapterPage from "./pages/ChapterPage";
+import Notes from "./pages/Notes";
 
 function App() {
   const dispatch = useDispatch();
@@ -82,6 +83,15 @@ function App() {
            path="/books/:id/chapters"
            element={
              <PublicLayout><ChapterPage /></PublicLayout>
+           }
+         />
+
+         <Route
+           path="/books/:id/chapters/:chapterId/notes"
+           element={
+             <ProtectedRoute allowedRoles={["user", "admin", "seller"]}>
+               <Notes />
+             </ProtectedRoute>
            }
          />
 
