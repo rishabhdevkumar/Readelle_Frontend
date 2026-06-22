@@ -2,8 +2,8 @@ import { useState, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { useParams, useNavigate } from "react-router-dom";
 import { getAllBooks } from "../redux/slices/bookSlice";
-import { toggleWishlist,getAllWishlist } from "../redux/slices/wishlistSlice";
-import { getCart ,addToCart} from "../redux/slices/cartSlice";
+import { toggleWishlist, getAllWishlist } from "../redux/slices/wishlistSlice";
+import { getCart, addToCart } from "../redux/slices/cartSlice";
 import { toast } from "react-hot-toast";
 
 
@@ -114,18 +114,22 @@ const navLinks = ["Home", "Books", "Wishlist"];
 export default function BookdetailPage() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const { id } = useParams();
+
   const [activeNav, setActiveNav] = useState("Books");
   const [cartAdded, setCartAdded] = useState(false);
   const [wishlisted, setWishlisted] = useState(false);
 
 
   const authState = useSelector((state) => state.auth);
-  const isLoggedIn = authState?.isLoggedIn || false;
-
-  const { id } = useParams();
-
   const books = useSelector((state) => state.books.booksData || []);
   const isLoading = useSelector((state) => state.books.isLoading);
+  const { cartData } = useSelector((state) => state.cart);
+  const { wishlistData } = useSelector((state) => state.wishlist);
+
+  const isLoggedIn = authState?.isLoggedIn || false;
+
+
 
 
   // Fetch books if not already loaded
@@ -141,49 +145,6 @@ export default function BookdetailPage() {
 
   const book = books.find((b) => b._id === id);
 
-  // Show loading state
-  if (isLoading || (!book && books.length === 0)) {
-    return (
-      <div style={{ background: colors.surface, minHeight: "100vh" }} className="flex items-center justify-center">
-        <div className="text-center">
-          <div className="inline-block h-12 w-12 animate-spin rounded-full border-4 border-solid border-[#002629] border-r-transparent"></div>
-          <p className="mt-4 text-[#404849] font-medium">Loading book details...</p>
-        </div>
-      </div>
-    );
-  }
-
-  // Show error if book not found after loading
-  if (!book) {
-    return (
-      <div style={{ background: colors.surface, minHeight: "100vh" }} className="flex items-center justify-center px-4">
-        <div className="text-center max-w-md">
-          <h1 className="text-3xl font-bold text-[#002629] mb-4 font-['Manrope']">Book Not Found</h1>
-          <p className="text-[#404849] mb-6">Sorry, we couldn't find the book you're looking for.</p>
-          <a
-            href="/books"
-            className="inline-block px-6 py-3 bg-gradient-to-r from-[#002629] to-[#083d41] text-white rounded-lg font-semibold hover:opacity-95 transition-opacity no-underline"
-          >
-            Browse All Books
-          </a>
-        </div>
-      </div>
-    );
-  }
-
-
-
-
-  const metaItems = [
-    { label: "Format", value: "Hardcover" },
-    { label: "Pages", value: "180 pp." },
-    { label: "Language", value: book.language },
-    { label: "Published", value: "1925" },
-  ];
-
-
-  const { cartData } = useSelector((state) => state.cart);
-  const { wishlistData } = useSelector((state) => state.wishlist);
 
   // 3. Determine if this specific book is already added to cart
   const isAlreadyInCart = cartData.some((item) => {
@@ -235,15 +196,46 @@ export default function BookdetailPage() {
     dispatch(toggleWishlist(book._id));
   };
 
-  // useEffect(() => {
-  //   if (books.length === 0) {
-  //     dispatch(getAllBooks());
-  //   }
-  //   if (isLoggedIn) {
-  //     dispatch(getCart());
-  //     dispatch(getAllWishlist());
-  //   }
-  // }, [dispatch, books.length, isLoggedIn]);
+
+  // Show loading state
+  if (isLoading || (!book && books.length === 0)) {
+    return (
+      <div style={{ background: colors.surface, minHeight: "100vh" }} className="flex items-center justify-center">
+        <div className="text-center">
+          <div className="inline-block h-12 w-12 animate-spin rounded-full border-4 border-solid border-[#002629] border-r-transparent"></div>
+          <p className="mt-4 text-[#404849] font-medium">Loading book details...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error if book not found after loading
+  if (!book) {
+    return (
+      <div style={{ background: colors.surface, minHeight: "100vh" }} className="flex items-center justify-center px-4">
+        <div className="text-center max-w-md">
+          <h1 className="text-3xl font-bold text-[#002629] mb-4 font-['Manrope']">Book Not Found</h1>
+          <p className="text-[#404849] mb-6">Sorry, we couldn't find the book you're looking for.</p>
+          <a
+            href="/books"
+            className="inline-block px-6 py-3 bg-gradient-to-r from-[#002629] to-[#083d41] text-white rounded-lg font-semibold hover:opacity-95 transition-opacity no-underline"
+          >
+            Browse All Books
+          </a>
+        </div>
+      </div>
+    );
+  }
+
+
+
+
+  const metaItems = [
+    { label: "Format", value: "Hardcover" },
+    { label: "Pages", value: "180 pp." },
+    { label: "Language", value: book.language },
+    { label: "Published", value: "1925" },
+  ];
 
   return (
     <div style={{ background: colors.surface, color: colors.onSurface, fontFamily: "'Inter', sans-serif", minHeight: "100vh" }}>
