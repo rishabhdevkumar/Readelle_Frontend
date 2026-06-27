@@ -10,6 +10,7 @@ import OrderSliceReducer from "./slices/orderSlice";
 import BookmarkSliceReducer from "./slices/bookmarkSlice";
 import ProgressSliceReducer from "./slices/progressSlice";
 import HighlightSliceReducer from "./slices/highlightSlice";
+import RatingSliceReducer from "./slices/ratingSlice";
 
 export const store = configureStore({
     reducer: {
@@ -24,6 +25,7 @@ export const store = configureStore({
         bookmarks: BookmarkSliceReducer,
         progress: ProgressSliceReducer,
         highlights: HighlightSliceReducer,
+        ratings: RatingSliceReducer
     },
     devTools: true,
     middleware: (getDefaultMiddleware) =>

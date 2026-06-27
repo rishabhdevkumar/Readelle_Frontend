@@ -142,7 +142,7 @@ function BookCard({ book, isInWishlist, onWishlistToggle }) {
             className="text-lg md:text-xl font-black"
             style={{ fontFamily: "Manrope, sans-serif", color: colors.primary }}
           >
-            {book.price}
+            ₹{book.price}
           </span>
           <button
             onClick={handleAdd}

@@ -5,7 +5,7 @@ import { getAllBooks } from "../redux/slices/bookSlice";
 import { toggleWishlist, getAllWishlist } from "../redux/slices/wishlistSlice";
 import { getCart, addToCart } from "../redux/slices/cartSlice";
 import { toast } from "react-hot-toast";
-
+import { createRating, getAllRating ,updateRating} from "../redux/slices/ratingSlice";
 
 const colors = {
   primary: "#002629",
@@ -27,11 +27,45 @@ const colors = {
   outline: "#707979",
 };
 
-const StarIcon = ({ filled = true, size = 18 }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill={filled ? colors.tertiary : "none"} stroke={colors.tertiary} strokeWidth="1.5">
-    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-  </svg>
-);
+// const StarIcon = ({ filled = true, size = 18 }) => (
+//   <svg width={size} height={size} viewBox="0 0 24 24" fill={filled ? colors.tertiary : "none"} stroke={colors.tertiary} strokeWidth="1.5">
+//     <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+//   </svg>
+// );
+const StarIcon = ({ fillType = "full", size = 18 }) => {
+  // Safe fallback if colors.tertiary is missing
+  const starColor = colors?.tertiary || "#f59e0b";
+
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      stroke={starColor}
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      style={{ display: "inline-block", verticalAlign: "middle" }}
+    >
+      <defs>
+        {/* Creates a clean 50/50 split gradient for the half-star look */}
+        <linearGradient id="halfStarGrad">
+          <stop offset="50%" stopColor={starColor} />
+          <stop offset="50%" stopColor="transparent" stopOpacity="0" />
+        </linearGradient>
+      </defs>
+      <path
+        d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"
+        fill={
+          fillType === "full" ? starColor :
+            fillType === "half" ? "url(#halfStarGrad)" :
+              "none"
+        }
+      />
+    </svg>
+  );
+};
+
 
 const CartIcon = ({ size = 22 }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -84,6 +118,22 @@ const RssIcon = ({ size = 18 }) => (
   </svg>
 );
 
+const renderStars = (currentRating) => {
+  const rating = currentRating || 0;
+  const stars = [];
+
+  for (let index = 1; index <= 5; index++) {
+    if (rating >= index) {
+      stars.push(<StarIcon key={index} fillType="full" size={14} />);
+    } else if (rating > index - 1 && rating < index) {
+      stars.push(<StarIcon key={index} fillType="half" size={14} />);
+    } else {
+      stars.push(<StarIcon key={index} fillType="empty" size={14} />);
+    }
+  }
+  return stars;
+};
+
 const reviews = [
   {
     stars: 5,
@@ -119,31 +169,57 @@ export default function BookdetailPage() {
   const [activeNav, setActiveNav] = useState("Books");
   const [cartAdded, setCartAdded] = useState(false);
   const [wishlisted, setWishlisted] = useState(false);
-
+  const [hoverRating, setHoverRating] = useState(0);
+  const [selectedRating, setSelectedRating] = useState(0);
 
   const authState = useSelector((state) => state.auth);
   const books = useSelector((state) => state.books.booksData || []);
   const isLoading = useSelector((state) => state.books.isLoading);
   const { cartData } = useSelector((state) => state.cart);
   const { wishlistData } = useSelector((state) => state.wishlist);
+  const { ratingsData } = useSelector((state) => state.ratings);
 
   const isLoggedIn = authState?.isLoggedIn || false;
 
 
 
+  const AverageRating = ratingsData?.averageRating ?? 0;
+  const TotalRatings = ratingsData?.totalRatings ?? 0;
+  const userRating = ratingsData?.userRating;
+
+
+  const book = books.find((b) => b._id === id);
 
   // Fetch books if not already loaded
+  // Load books once
   useEffect(() => {
     if (books.length === 0) {
       dispatch(getAllBooks());
     }
+  }, [dispatch, books.length]);
+
+  // Load cart and wishlist
+  useEffect(() => {
     if (isLoggedIn) {
       dispatch(getCart());
       dispatch(getAllWishlist());
     }
-  }, [dispatch, books.length, isLoggedIn]);
+  }, [dispatch, isLoggedIn]);
 
-  const book = books.find((b) => b._id === id);
+  // Load ratings when the selected book changes
+  useEffect(() => {
+    if (book?._id) {
+      dispatch(getAllRating(book._id));
+    }
+  }, [dispatch, book?._id]);
+
+  // Initialize the selected rating when userRating changes
+  useEffect(() => {
+    if (userRating) {
+      setSelectedRating(userRating.rating);
+    }
+  }, [userRating]);
+
 
 
   // 3. Determine if this specific book is already added to cart
@@ -156,6 +232,40 @@ export default function BookdetailPage() {
     const wishlistBookId = item.book && typeof item.book === "object" ? item.book._id : item.book;
     return wishlistBookId === book?._id;
   });
+
+
+  const handleRatingClick = async (event, star) => {
+    const { left, width } = event.currentTarget.getBoundingClientRect();
+    const clickX = event.clientX - left;
+
+    const rating = clickX < width / 2 ? star - 0.5 : star;
+
+    // Update UI immediately
+    setSelectedRating(rating);
+
+    // Save to backend
+    if (userRating) {
+      await dispatch(
+        updateRating({
+          id: userRating._id,
+          data: {
+            rating,
+          },
+        })
+      );
+    } else {
+      await dispatch(
+        createRating({
+          bookId: book._id,
+          rating,
+        })
+      );
+    }
+
+    // Refresh average and user rating
+    dispatch(getAllRating(book._id));
+  };
+
 
   //  Handle Add to Cart Click
   const handleCartClick = async () => {
@@ -183,7 +293,7 @@ export default function BookdetailPage() {
     }
   };
 
-  // ❤️ Toggle Wishlist Trigger
+  // Toggle Wishlist Trigger
   const handleWishlistClick = () => {
     if (!book?._id) return;
 
@@ -299,9 +409,69 @@ export default function BookdetailPage() {
                 <span className="md:text-lg" style={{ fontSize: 15, color: colors.onSurfaceVariant, fontWeight: 500 }}> {book.author} </span>
                 <span style={{ width: 6, height: 6, borderRadius: "50%", background: colors.outlineVariant, display: "inline-block" }} />
                 <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                  <StarIcon filled size={14} />
-                  <span className="md:text-[15px]" style={{ fontWeight: 700, fontSize: 14 }}>4.8</span>
-                  <span className="md:text-sm" style={{ color: colors.onSurfaceVariant, fontSize: 13 }}>(1,240 reviews)</span>
+                  <div className="flex flex-row items-center gap-0.5">
+                    {[1, 2, 3, 4, 5].map((star) => {
+
+                      // Show user's rating if available,
+                      // otherwise show average rating.
+                      const displayRating = userRating
+                        ? selectedRating
+                        : AverageRating;
+
+                      let fillType = "empty";
+
+                      if (displayRating >= star) {
+                        fillType = "full";
+                      } else if (
+                        displayRating > star - 1 &&
+                        displayRating < star
+                      ) {
+                        fillType = "half";
+                      }
+
+                      return (
+                        <button
+                          key={star}
+                          type="button"
+                          onClick={(e) => handleRatingClick(e, star)}
+                          style={{
+                            background: "none",
+                            border: "none",
+                            padding: 0,
+                            cursor: "pointer",
+                          }}
+                        >
+                          <StarIcon
+                            fillType={fillType}
+                            size={16}
+                          />
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  <span
+                    className="md:text-[15px]"
+                    style={{
+                      fontWeight: 700,
+                      fontSize: 14,
+                    }}
+                  >
+                    {AverageRating.toFixed(1)}
+                  </span>
+
+                  <span
+                    className="md:text-sm"
+                    style={{
+                      color: colors.onSurfaceVariant,
+                      fontSize: 13,
+                    }}
+                  >
+                    {TotalRatings}{" "}
+                    {TotalRatings === 1 ? "review" : "reviews"}
+                  </span>
+
+
                 </div>
               </div>
             </div>
