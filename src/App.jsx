@@ -24,6 +24,7 @@ import ChapterPage from "./pages/ChapterPage";
 import Notes from "./pages/Notes";
 import CheckoutPage from "./pages/CheckoutPage";
 import OrderSuccessPage from "./pages/OrderSuccessPage";
+import OrdersPage from "./pages/OrdersPage";
 
 function App() {
   const dispatch = useDispatch();
@@ -216,6 +217,15 @@ function App() {
             <PublicLayout>
               <OrderSuccessPage />
             </PublicLayout>
+          }
+        />
+
+        <Route
+          path="/orders"
+          element={
+              <PublicLayout>
+                <OrdersPage />
+              </PublicLayout>
           }
         />
       </Routes>
