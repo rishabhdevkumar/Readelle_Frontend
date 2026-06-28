@@ -925,7 +925,7 @@ function StudyGuidePanel({
 }
 
 // ─── Chapter content renderer ─────────────────────────────────────────────────
-function ChapterContent({ chapter, highlights, onTextSelect, onHighlightClick, activeTheme }) {
+function ChapterContent({ chapter, highlights, onTextSelect, onHighlightClick, activeTheme, fontSize = 16 }) {
   const contentRef = useRef(null);
 
   const content = chapter?.chapter_content || chapter?.content || chapter?.context || "";
@@ -972,7 +972,7 @@ function ChapterContent({ chapter, highlights, onTextSelect, onHighlightClick, a
           className="book-text-paragraph"
           style={{
             fontFamily: "'Georgia',serif",
-            fontSize: "clamp(15px,1.6vw,17px)",
+            fontSize: `${fontSize}px`,
             lineHeight: 1.9,
             color: activeTheme.text,
             marginBottom: "1.5rem",
@@ -985,7 +985,7 @@ function ChapterContent({ chapter, highlights, onTextSelect, onHighlightClick, a
             <>
               <span style={{
                 float: "left",
-                fontSize: "clamp(52px,8vw,72px)",
+                fontSize: `${Math.max(48, Math.round(fontSize * 3.5))}px`,
                 lineHeight: 0.78,
                 fontFamily: "'Georgia',serif",
                 fontWeight: 700,
@@ -1978,6 +1978,7 @@ export default function Notes() {
                 onTextSelect={handleTextSelect}
                 onHighlightClick={handleHighlightClick}
                 activeTheme={activeTheme}
+                fontSize={fontSize}
               />
             )}
 

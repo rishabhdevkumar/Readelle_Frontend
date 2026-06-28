@@ -1,6 +1,7 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import axiosInstance from "../../helpers/axiosInstance";
 import toast from "react-hot-toast";
+import { logActivity, logLoginIfNewSession } from "../../helpers/activityLogger";
 
 const initialState = {
     isLoggedIn: false,
@@ -177,6 +178,8 @@ const authSlice = createSlice({
                 state.role = userData?.role || "";
                 state.data = userData || {};
                 state.isCheckingAuth = false;
+                // Log sign-in activity
+                logActivity("login", "Signed in", "Account");
             })
 
             .addCase(getMe.fulfilled, (state, action) => {
@@ -196,6 +199,8 @@ const authSlice = createSlice({
                     state.role = userData?.role || "";
                     state.data = userData || {};
                     state.isCheckingAuth = false;
+                    // Track session — won't duplicate if logged in < 1hr ago
+                    logLoginIfNewSession();
                 }
             })
 

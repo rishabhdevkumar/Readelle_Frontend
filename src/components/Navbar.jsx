@@ -64,7 +64,7 @@ export default function Navbar() {
               />
             </NavLink>
 
-            <div className="hidden lg:flex gap-8 items-center text-base">
+            <div className="hidden lg:flex gap-6 lg:gap-8 items-center text-base">
               <NavLink to="/" className={linkStyles}>
                 Home
               </NavLink>
@@ -100,7 +100,7 @@ export default function Navbar() {
 
           <div className="flex items-center gap-3 md:gap-6 py-5">
             {/* Desktop Search */}
-            <div className="hidden lg:flex items-center bg-slate-200/50 rounded-lg px-3 py-2 w-64">
+            <div className="hidden lg:flex items-center bg-slate-200/50 rounded-lg px-3 py-2 w-48 lg:w-64">
               <Search size={16} className="text-gray-400" />
               <input
                 type="text"
@@ -145,7 +145,7 @@ export default function Navbar() {
             </NavLink>
 
             {isLoggedIn ? (
-              <div className="hidden md:flex items-center gap-3">
+              <div className="hidden lg:flex items-center gap-3">
                 <NavLink
                   to="/my-account"
                   className="px-4 py-2 border rounded-md text-[#002629] border-[#002629] hover:bg-slate-100 font-semibold transition-all duration-200"

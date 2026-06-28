@@ -6,7 +6,7 @@ export default function PublicLayout({ children }) {
   return (
     <>
       <Navbar />
-      <div className="pb-16 md:pb-0">
+      <div className="pb-16 lg:pb-0">
         {children}
       </div>
       <Footer />

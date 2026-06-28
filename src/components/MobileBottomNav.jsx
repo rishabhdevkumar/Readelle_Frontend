@@ -44,13 +44,13 @@ export default function MobileBottomNav() {
   ];
 
   const linkStyles = ({ isActive }) =>
-    `flex flex-col items-center justify-center gap-1 py-2 px-4 relative transition-all duration-200 ${
+    `flex flex-col items-center justify-center gap-1 py-2 w-full relative transition-all duration-200 ${
       isActive ? "text-[#002629]" : "text-slate-400"
     }`;
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-slate-200 md:hidden shadow-[0_-4px_20px_rgba(0,0,0,0.08)]">
-      <nav className="flex justify-around items-center px-2 py-2 max-w-md mx-auto">
+    <div className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-slate-200 lg:hidden shadow-[0_-4px_20px_rgba(0,0,0,0.08)]">
+      <nav className="flex items-center w-full py-1">
         {navItems.map(
           (item) =>
             item.show && (
@@ -58,7 +58,7 @@ export default function MobileBottomNav() {
                 {item.onClick ? (
                   <button
                     onClick={item.onClick}
-                    className="flex flex-col items-center justify-center gap-1 py-2 px-4 w-full text-slate-400 hover:text-[#002629] transition-all duration-200"
+                    className="flex flex-col items-center justify-center gap-1 py-2 w-full text-slate-400 hover:text-[#002629] transition-all duration-200"
                   >
                     <div className="relative w-10 h-10 flex items-center justify-center rounded-full border-2 border-slate-200 group-hover:border-[#002629] group-hover:bg-[#002629]/5 transition-all duration-200">
                       <item.icon size={20} strokeWidth={2} />
